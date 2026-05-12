@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressChart } from "@/components/dashboard/ProgressChart";
@@ -16,6 +16,18 @@ export default async function DashboardPage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  // Cek apakah user adalah admin
+  const adminClient = createAdminClient();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.is_admin) {
+    redirect("/admin");
   }
 
   // Fetch enrollments
@@ -42,40 +54,47 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-slate-50 min-h-screen">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h2>
+    <div className="space-y-6 p-6 md:p-8">
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Ikhtisar Dashboard</h2>
+        <p className="text-slate-500">Pantau perkembangan aktivitas, progres belajar, dan kursus Anda hari ini.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Kursus Dimiliki</CardTitle>
-            <BookOpen className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-slate-600">Kursus Dimiliki</CardTitle>
+            <div className="p-2 bg-primary/10 rounded-md">
+              <BookOpen className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{enrollments?.length || 0}</div>
-            <p className="text-xs text-slate-500">Materi premium yang bisa diakses</p>
+            <div className="text-2xl font-bold text-slate-900">{enrollments?.length || 0}</div>
+            <p className="text-xs text-slate-500 mt-1">Materi premium yang bisa diakses</p>
           </CardContent>
         </Card>
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Materi Selesai</CardTitle>
-            <Trophy className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-slate-600">Materi Selesai</CardTitle>
+            <div className="p-2 bg-emerald-500/10 rounded-md">
+              <Trophy className="h-4 w-4 text-emerald-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedLessons}</div>
-            <p className="text-xs text-slate-500">Sub-bab telah diselesaikan</p>
+            <div className="text-2xl font-bold text-slate-900">{completedLessons}</div>
+            <p className="text-xs text-slate-500 mt-1">Sub-bab telah diselesaikan</p>
           </CardContent>
         </Card>
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jam Belajar</CardTitle>
-            <Clock className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-sm font-medium text-slate-600">Jam Belajar</CardTitle>
+            <div className="p-2 bg-amber-500/10 rounded-md">
+              <Clock className="h-4 w-4 text-amber-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12j 30m</div>
-            <p className="text-xs text-slate-500">Estimasi waktu belajar bulan ini</p>
+            <div className="text-2xl font-bold text-slate-900">12j 30m</div>
+            <p className="text-xs text-slate-500 mt-1">Estimasi waktu belajar bulan ini</p>
           </CardContent>
         </Card>
       </div>

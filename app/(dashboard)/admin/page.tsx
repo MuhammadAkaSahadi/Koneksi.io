@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +19,8 @@ export default async function AdminDashboardPage() {
   }
 
   // Check admin role
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient();
+  const { data: profile } = await adminClient
     .from("profiles")
     .select("is_admin")
     .eq("id", user.id)
@@ -52,52 +53,61 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-slate-50 min-h-screen">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Admin Dashboard</h2>
+    <div className="space-y-6 p-6 md:p-8">
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Ikhtisar Dashboard</h2>
+        <p className="text-slate-500">Pantau perkembangan pengguna, transaksi, dan aktivitas kursus hari ini.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Pendapatan</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-slate-600">Total Pengguna Aktif</CardTitle>
+            <div className="p-2 bg-primary/10 rounded-md">
+              <Users className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-slate-900">{totalUsers || 0}</div>
+            <p className="text-xs text-emerald-500 font-medium mt-1">↑ 12.5% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
+          </CardContent>
+        </Card>
+        <Card className="border-border shadow-sm rounded-xl">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Total Transaksi</CardTitle>
+            <div className="p-2 bg-rose-500/10 rounded-md">
+              <CreditCard className="h-4 w-4 text-rose-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{successTransactions.length}</div>
+            <p className="text-xs text-emerald-500 font-medium mt-1">↑ 8.3% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
+          </CardContent>
+        </Card>
+        <Card className="border-border shadow-sm rounded-xl">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Total Pendapatan</CardTitle>
+            <div className="p-2 bg-emerald-500/10 rounded-md">
+              <DollarSign className="h-4 w-4 text-emerald-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
               {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalRevenue)}
             </div>
-            <p className="text-xs text-slate-500">+20.1% dari bulan lalu</p>
+            <p className="text-xs text-emerald-500 font-medium mt-1">↑ 15.2% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
           </CardContent>
         </Card>
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pengguna Terdaftar</CardTitle>
-            <Users className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-slate-600">Total Kursus</CardTitle>
+            <div className="p-2 bg-amber-500/10 rounded-md">
+              <Activity className="h-4 w-4 text-amber-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{totalUsers || 0}</div>
-            <p className="text-xs text-slate-500">+180 bulan ini</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transaksi Sukses</CardTitle>
-            <CreditCard className="h-4 w-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{successTransactions.length}</div>
-            <p className="text-xs text-slate-500">+19% dari bulan lalu</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
-            <Activity className="h-4 w-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-slate-500">Sejak jam terakhir</p>
+            <div className="text-2xl font-bold text-slate-900">12</div>
+            <p className="text-xs text-rose-500 font-medium mt-1">↓ 5.1% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
           </CardContent>
         </Card>
       </div>

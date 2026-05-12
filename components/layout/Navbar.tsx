@@ -1,12 +1,24 @@
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { UserNav } from "./UserNav";
 
 export async function Navbar() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  let isAdmin = false;
+  if (user) {
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+    
+    isAdmin = profile?.is_admin || false;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -30,7 +42,7 @@ export async function Navbar() {
         </nav>
         <div className="flex items-center gap-4">
           {user ? (
-            <UserNav user={user} />
+            <UserNav user={user} isAdmin={isAdmin} />
           ) : (
             <>
               <Link href="/login" className="text-sm font-medium hover:underline hidden md:block">
