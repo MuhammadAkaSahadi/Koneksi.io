@@ -1,12 +1,12 @@
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { CoursesTable } from "@/components/dashboard/CoursesTable";
+import { UsersTable } from "@/components/dashboard/UsersTable";
 
 export const metadata = {
-  title: "Kelola Modul | Admin Koneksi.io",
+  title: "Manajemen Pengguna | Admin Koneksi.io",
 };
 
-export default async function AdminCoursesPage() {
+export default async function AdminUsersPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -26,16 +26,17 @@ export default async function AdminCoursesPage() {
     redirect("/dashboard");
   }
 
-  // Query semua data modul (themes) dari database
-  const { data: themes } = await supabase
-    .from("themes")
+  // Query semua profil pengguna di database
+  const { data: profiles } = await adminClient
+    .from("profiles")
     .select("*")
     .order("created_at", { ascending: false });
 
-  // Konversi data numerik harga
-  const parsedCourses = (themes || []).map((t: any) => ({
-    ...t,
-    price_lifetime: Number(t.price_lifetime)
+  // Map data untuk memastikan default status terisi jika kosong
+  const parsedUsers = (profiles || []).map((p: any) => ({
+    ...p,
+    status: p.status || "Aktif",
+    banned_reason: p.banned_reason || null
   }));
 
   return (
@@ -44,15 +45,15 @@ export default async function AdminCoursesPage() {
       {/* Header Halaman */}
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
-          Kelola Modul
+          Manajemen Pengguna
         </h1>
         <p className="text-slate-500 text-sm">
-          Buat, ubah detail, atur harga, dan publikasikan materi pembelajaran IoT Koneksi.io.
+          Pantau aktivitas siswa, ubah status keanggotaan, ubah role akses, atau tangguhkan akun pengguna yang melanggar ketentuan.
         </p>
       </div>
 
-      {/* Tabel Modul Klien */}
-      <CoursesTable initialCourses={parsedCourses} />
+      {/* Tabel Pengguna Klien */}
+      <UsersTable initialUsers={parsedUsers} />
 
     </div>
   );
