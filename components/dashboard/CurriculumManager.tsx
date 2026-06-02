@@ -62,15 +62,38 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [targetChapterId, setTargetChapterId] = useState<string | null>(null);
-  
+
   // Lesson Form states
   const [lessonTitle, setLessonTitle] = useState("");
-  const [lessonYoutubeId, setLessonYoutubeId] = useState("");
+  const [lessonYoutubeUrl, setLessonYoutubeUrl] = useState("");
   const [lessonDuration, setLessonDuration] = useState("");
   const [lessonDescription, setLessonDescription] = useState("");
   const [lessonIsFree, setLessonIsFree] = useState(false);
 
   const supabase = useMemo(() => createClient(), []);
+
+  // Helper function to extract YouTube ID from URL
+  const extractYouTubeId = (url: string): string | null => {
+    if (!url) return null;
+
+    // If it's already just an ID (11 characters, alphanumeric with _ and -)
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) {
+      return url.trim();
+    }
+
+    // Extract from various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) return match[1];
+    }
+
+    return null;
+  };
 
   // Chapter operations
   const handleOpenAddChapter = () => {
@@ -193,7 +216,7 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
     setTargetChapterId(chapterId);
     setEditingLesson(null);
     setLessonTitle("");
-    setLessonYoutubeId("");
+    setLessonYoutubeUrl("");
     setLessonDuration("");
     setLessonDescription("");
     setLessonIsFree(false);
@@ -204,7 +227,8 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
     setTargetChapterId(lesson.chapter_id);
     setEditingLesson(lesson);
     setLessonTitle(lesson.title);
-    setLessonYoutubeId(lesson.youtube_id);
+    // Construct YouTube URL from stored ID for editing
+    setLessonYoutubeUrl(`https://www.youtube.com/watch?v=${lesson.youtube_id}`);
     setLessonDuration(lesson.duration || "");
     setLessonDescription(lesson.description || "");
     setLessonIsFree(lesson.is_free);
@@ -217,17 +241,25 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
       toast.error("Judul materi tidak boleh kosong");
       return;
     }
-    if (!lessonYoutubeId.trim()) {
-      toast.error("YouTube Video ID tidak boleh kosong");
+    if (!lessonYoutubeUrl.trim()) {
+      toast.error("Link YouTube tidak boleh kosong");
       return;
     }
+
+    // Extract YouTube ID from URL
+    const youtubeId = extractYouTubeId(lessonYoutubeUrl);
+    if (!youtubeId) {
+      toast.error("Link YouTube tidak valid. Pastikan Anda memasukkan URL YouTube yang benar.");
+      return;
+    }
+
     if (!targetChapterId) return;
 
     setIsLoading(true);
 
     const payload = {
       title: lessonTitle,
-      youtube_id: lessonYoutubeId,
+      youtube_id: youtubeId,
       duration: lessonDuration.trim() || null,
       description: lessonDescription.trim() || null,
       is_free: lessonIsFree,
@@ -261,7 +293,7 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
       // Add lesson
       const chapter = chapters.find((c) => c.id === targetChapterId);
       const maxOrder = chapter?.lessons?.reduce((max, l) => Math.max(max, l.order_index), 0) || 0;
-      
+
       const newLessonPayload = {
         chapter_id: targetChapterId,
         order_index: maxOrder + 1,
@@ -652,19 +684,19 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
                 />
               </div>
 
-              {/* Grid: YouTube ID & Duration */}
+              {/* Grid: YouTube URL & Duration */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">YouTube Video ID</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Link Video YouTube</label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: gfGbcVb4Kzo"
-                    value={lessonYoutubeId}
-                    onChange={(e) => setLessonYoutubeId(e.target.value)}
-                    className="w-full px-3.5 py-2 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] focus:border-[#1164b8] font-mono text-xs"
+                    placeholder="https://www.youtube.com/watch?v=gfGbcVb4Kzo"
+                    value={lessonYoutubeUrl}
+                    onChange={(e) => setLessonYoutubeUrl(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] focus:border-[#1164b8]"
                   />
-                  <p className="text-[10px] text-slate-400">Kode 11 karakter di akhir URL video YouTube Anda.</p>
+                  <p className="text-[10px] text-slate-400">Salin dan tempel link lengkap video YouTube Anda.</p>
                 </div>
 
                 <div className="space-y-1.5">

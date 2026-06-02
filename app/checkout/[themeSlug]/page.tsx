@@ -3,7 +3,21 @@ import { createClient } from "@/utils/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutClient } from "@/components/checkout/CheckoutClient";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Video } from "lucide-react";
+
+// Helper function to extract YouTube ID from URL
+function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
 
 export default async function CheckoutPage({
   params,
@@ -75,6 +89,35 @@ export default async function CheckoutPage({
                     <p className="text-sm text-slate-500">Akses Lifetime</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Video className="h-5 w-5" />
+                  Video Preview - Gratis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {theme.preview_video_url && extractYouTubeId(theme.preview_video_url) ? (
+                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-slate-900">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={`https://www.youtube.com/embed/${extractYouTubeId(theme.preview_video_url)}`}
+                      title="Video Preview"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-video w-full rounded-lg bg-slate-100 flex items-center justify-center">
+                    <p className="text-sm text-slate-500 font-medium">Tidak ada video preview</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
