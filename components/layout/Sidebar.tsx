@@ -213,12 +213,12 @@ export function Sidebar({
   const renderUserSidebar = () => {
     return (
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col bg-[#0a0a0c] border-r border-[#1a1a1f] transition-all duration-300 shadow-xl",
+        "fixed inset-y-0 left-0 z-50 flex flex-col bg-[#1E293B] text-white transition-all duration-300 shadow-[2px_0_8px_rgba(0,0,0,0.1)] border-r border-white/5",
         "w-[240px]",
         isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Logo Area */}
-        <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-[#1a1a1f]">
+        <div className="flex h-[72px] shrink-0 items-center justify-between px-6 border-b border-white/10">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0891b2] text-white font-heading font-bold text-lg">
               K.
@@ -236,8 +236,8 @@ export function Sidebar({
         </div>
 
         {/* Menu Navigasi */}
-        <div className="flex-1 overflow-y-auto py-6 px-4">
-          <nav className="space-y-1">
+        <div className="flex-1 overflow-y-auto py-6 px-3">
+          <nav className="space-y-1.5">
             {links.map((link) => {
               const isActive = pathname === link.href || (link.href !== "/dashboard" && pathname?.startsWith(link.href));
               
@@ -248,10 +248,10 @@ export function Sidebar({
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-lg px-4 py-3 text-[14px] font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors group"
+                    className="flex items-center justify-between rounded-lg px-4 py-2.5 text-[14px] font-medium text-slate-300/70 hover:bg-white/8 hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-3">
-                      <link.icon className="h-5 w-5 text-slate-500 group-hover:text-white" />
+                      <link.icon className="h-5 w-5 text-slate-400 group-hover:text-white" />
                       <span>{link.name}</span>
                     </div>
                     {link.badge && (
@@ -268,15 +268,15 @@ export function Sidebar({
                   key={link.name}
                   href={link.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-4 py-3 text-[14px] font-medium transition-all group",
+                    "flex items-center rounded-lg py-2.5 font-medium transition-all duration-150 group relative px-4 gap-3",
                     isActive
-                      ? "bg-[#0891b2] text-white shadow-md shadow-[#0891b2]/20 font-semibold"
-                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      ? "bg-[#1164b8] text-white border-l-3 border-[#b1de01] font-semibold"
+                      : "text-slate-300/70 hover:bg-white/8 hover:text-white"
                   )}
                 >
                   <link.icon className={cn(
                     "h-5 w-5 shrink-0 transition-colors",
-                    isActive ? "text-white" : "text-slate-500 group-hover:text-white"
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-white"
                   )} />
                   <span>{link.name}</span>
                 </Link>
@@ -286,21 +286,46 @@ export function Sidebar({
         </div>
 
         {/* Bagian Bawah User */}
-        <div className="mt-auto border-t border-[#1a1a1f] p-4 space-y-3">
+        <div className="mt-auto border-t border-white/10 p-4 space-y-4">
           <Link
             href="/dashboard/help"
-            className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-[14px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors border border-[#1a1a1f]"
+            className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-[14px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors border border-white/10"
           >
-            <HelpCircle className="h-5 w-5 text-slate-500" />
+            <HelpCircle className="h-5 w-5 text-slate-400" />
             <span>Bantuan</span>
           </Link>
-          <div className="h-px bg-[#1a1a1f] w-full" />
+
+          {/* Profile Card */}
+          <div className="flex items-center rounded-lg bg-white/5 transition-all duration-200 p-3 justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-9 w-9 border border-white/10">
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={profile.full_name || ""} />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-tr from-[#0891b2] to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                    {userInitials}
+                  </div>
+                )}
+                <AvatarFallback>{userInitials}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold truncate text-white leading-tight">
+                  {profile?.full_name || "Siswa IoT"}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  Siswa IoT
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Logout Button */}
           <button
             onClick={handleSignout}
             disabled={isPending}
-            className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-[14px] font-medium text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500 cursor-pointer"
+            className="flex items-center text-rose-400 rounded-lg py-2.5 font-medium transition-all bg-rose-500/15 hover:bg-rose-500/25 w-full px-4 gap-3 text-sm cursor-pointer"
           >
-            <LogOut className="h-5 w-5 text-slate-500" />
+            <LogOut className="h-5 w-5 shrink-0" />
             <span>Keluar</span>
           </button>
         </div>

@@ -10,6 +10,7 @@ import { login, signup } from "./actions";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { getURL } from "@/utils/url";
 
 export function AuthForm({
   className,
@@ -44,7 +45,7 @@ export function AuthForm({
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${getURL()}auth/callback`,
       },
     });
 
