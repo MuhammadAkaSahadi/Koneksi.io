@@ -188,11 +188,9 @@ export function TransactionsPageClient({
                     <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-slate-100 transition-colors">
-                            <MoreVertical className="h-4 w-4 text-slate-600" />
-                            <span className="sr-only">Actions</span>
-                          </button>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-slate-100 transition-colors">
+                          <MoreVertical className="h-4 w-4 text-slate-600" />
+                          <span className="sr-only">Actions</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
