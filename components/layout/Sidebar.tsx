@@ -266,7 +266,7 @@ export function Sidebar({
           </Link>
 
           {/* Profile Card */}
-          <div className="flex items-center rounded-lg bg-white/5 transition-all duration-200 p-3 justify-between">
+          {/* <div className="flex items-center rounded-lg bg-white/5 transition-all duration-200 p-3 justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9 border border-white/10">
                 {profile?.avatar_url ? (
@@ -287,7 +287,7 @@ export function Sidebar({
                 </span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Logout Button */}
           <button
