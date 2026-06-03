@@ -72,7 +72,7 @@ export function UserNav({ user, profile, isAdmin }: UserNavProps) {
             Dashboard
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem render={<Link href="/dashboard/profiles" className="cursor-pointer w-full" />}>
+        <DropdownMenuItem render={<Link href="/dashboard/profile" className="cursor-pointer w-full" />}>
           Pengaturan Profil
         </DropdownMenuItem>
         <DropdownMenuSeparator />
