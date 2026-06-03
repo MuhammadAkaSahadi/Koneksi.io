@@ -62,8 +62,11 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
   const [formPreviewVideo, setFormPreviewVideo] = useState("");
   const [formCategory, setFormCategory] = useState("Hardware (IoT)");
   const [formStatus, setFormStatus] = useState("Published");
-  const [pricingType, setPricingType] = useState<"free" | "paid">("paid");
   const [formPrice, setFormPrice] = useState("0");
+
+  // File upload states
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -103,8 +106,9 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
     setFormPreviewVideo("");
     setFormCategory("Hardware (IoT)");
     setFormStatus("Published");
-    setPricingType("paid");
     setFormPrice("0");
+    setSelectedFile(null);
+    setUploadProgress(0);
     setIsModalOpen(true);
   };
 
@@ -118,9 +122,9 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
     setFormPreviewVideo(course.preview_video_url || "");
     setFormCategory(course.category || "Hardware (IoT)");
     setFormStatus(course.status || "Published");
-    const priceVal = Number(course.price_lifetime);
-    setPricingType(priceVal === 0 ? "free" : "paid");
-    setFormPrice(priceVal.toString());
+    setFormPrice(course.price_lifetime.toString());
+    setSelectedFile(null);
+    setUploadProgress(0);
     setIsModalOpen(true);
   };
 
@@ -149,13 +153,49 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
     }
 
     setIsLoading(true);
-    const priceNum = pricingType === "free" ? 0 : Number(formPrice);
+
+    let thumbnailUrl = formThumbnail;
+
+    // Upload image to Supabase storage if a new file is selected
+    if (selectedFile) {
+      try {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `course-thumbnails/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, selectedFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          toast.error(`Gagal mengunggah gambar: ${uploadError.message}`);
+          setIsLoading(false);
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(filePath);
+
+        thumbnailUrl = publicUrl;
+      } catch (error: any) {
+        toast.error(`Gagal mengunggah gambar: ${error.message}`);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    const priceNum = Number(formPrice);
 
     const payload = {
       title: formTitle,
       slug: formSlug,
       description: formDescription,
-      thumbnail_url: formThumbnail || null,
+      thumbnail_url: thumbnailUrl || null,
       preview_video_url: formPreviewVideo || null,
       price_lifetime: priceNum,
       category: formCategory,
@@ -174,7 +214,7 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
         toast.error(`Gagal memperbarui kurikulum: ${error.message}`);
       } else {
         toast.success("Kurikulum berhasil diperbarui!");
-        setCourses((prev) => 
+        setCourses((prev) =>
           prev.map((c) => (c.id === editingCourse.id ? { ...c, ...payload } : c))
         );
         setIsModalOpen(false);
@@ -522,14 +562,24 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
                 </div>
               </div>
 
-              {/* Thumbnail URL */}
+              {/* Thumbnail Upload */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">URL Cover Thumbnail</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Cover Thumbnail</label>
                 <input
-                  type="text"
-                  placeholder="Contoh: https://example.com/cover-esp32.jpg"
-                  value={formThumbnail}
-                  onChange={(e) => setFormThumbnail(e.target.value)}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      // Preview the selected file
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setFormThumbnail(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                   className="w-full px-3.5 py-2.5 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] focus:border-[#1164b8]"
                 />
                 {formThumbnail && (
@@ -539,63 +589,21 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
                 )}
               </div>
 
-              {/* Preview Video URL */}
+              {/* Pricing */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">URL Video Preview (YouTube)</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: https://www.youtube.com/watch?v=gfGbcVb4Kzo"
-                  value={formPreviewVideo}
-                  onChange={(e) => setFormPreviewVideo(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] focus:border-[#1164b8]"
-                />
-              </div>
-
-              {/* Pricing Grid */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
-                <div className="flex items-center gap-6">
-                  {/* Tipe Harga */}
-                  <label className="text-xs font-bold text-slate-650 uppercase tracking-wide shrink-0">Tipe Harga:</label>
-                  
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer text-slate-700">
-                      <input
-                        type="radio"
-                        checked={pricingType === "free"}
-                        onChange={() => setPricingType("free")}
-                        className="text-[#1164b8] focus:ring-[#1164b8] h-4 w-4"
-                      />
-                      Gratis (Free)
-                    </label>
-                    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer text-slate-700">
-                      <input
-                        type="radio"
-                        checked={pricingType === "paid"}
-                        onChange={() => setPricingType("paid")}
-                        className="text-[#1164b8] focus:ring-[#1164b8] h-4 w-4"
-                      />
-                      Berbayar (Paid)
-                    </label>
-                  </div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Harga Lifetime (Rp)</label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">Rp</div>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    placeholder="Contoh: 199000"
+                    value={formPrice}
+                    onChange={(e) => setFormPrice(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] font-bold text-slate-800"
+                  />
                 </div>
-
-                {pricingType === "paid" && (
-                  <div className="space-y-1.5 pt-2 border-t border-slate-200">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Harga Lifetime (Rp)</label>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">Rp</div>
-                      <input
-                        type="number"
-                        min="0"
-                        required
-                        placeholder="Contoh: 199000"
-                        value={formPrice}
-                        onChange={(e) => setFormPrice(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] font-bold text-slate-800"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Action Buttons */}

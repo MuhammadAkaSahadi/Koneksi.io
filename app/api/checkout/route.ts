@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { themeId, themeTitle, price } = await req.json();
+    const { themeId, themeTitle, price, fullName, phone } = await req.json();
 
     if (!themeId || !price || !themeTitle) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -40,8 +40,8 @@ export async function POST(req: Request) {
       },
       customer_details: {
         email: user.email,
-        // Since we don't capture name yet in basic auth, we can just use email prefix
-        first_name: user.email?.split("@")[0] || "User",
+        first_name: fullName || user.email?.split("@")[0] || "User",
+        phone: phone || undefined,
       },
       item_details: [
         {
