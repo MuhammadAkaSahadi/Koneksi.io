@@ -15,8 +15,8 @@ const checkoutSchema = z.object({
   fullName: z.string().min(3, "Nama lengkap minimal 3 karakter"),
   phone: z
     .string()
-    .min(9, "Nomor telepon minimal 9 digit")
-    .max(15, "Nomor telepon maksimal 15 digit")
+    .min(16, "Nomor telepon minimal 9 digit")
+    .max(16, "Nomor telepon maksimal 15 digit")
     .regex(/^[0-9+]+$/, "Nomor telepon hanya boleh berisi angka dan tanda +"),
 });
 
