@@ -33,20 +33,20 @@ export function AdminMetricsGrid({ metrics }: AdminMetricsGridProps) {
     const interval = setInterval(() => {
       step++;
       setCounts({
-        revenue: Math.floor((metrics.revenueThisMonth || 12450000) * (step / steps)),
-        users: Math.floor((metrics.totalUsers || 1234) * (step / steps)),
-        subs: Math.floor((metrics.activeSubscriptions || 487) * (step / steps)),
-        pending: Math.floor((metrics.pendingTransactions || 23) * (step / steps))
+        revenue: Math.floor((metrics.revenueThisMonth || 0) * (step / steps)),
+        users: Math.floor((metrics.totalUsers || 0) * (step / steps)),
+        subs: Math.floor((metrics.activeSubscriptions || 0) * (step / steps)),
+        pending: Math.floor((metrics.pendingTransactions || 0) * (step / steps))
       });
 
       if (step >= steps) {
         clearInterval(interval);
         // Ensure exact final numbers are set
         setCounts({
-          revenue: metrics.revenueThisMonth || 12450000,
-          users: metrics.totalUsers || 1234,
-          subs: metrics.activeSubscriptions || 487,
-          pending: metrics.pendingTransactions || 23
+          revenue: metrics.revenueThisMonth || 0,
+          users: metrics.totalUsers || 0,
+          subs: metrics.activeSubscriptions || 0,
+          pending: metrics.pendingTransactions || 0
         });
       }
     }, stepTime);
@@ -66,7 +66,7 @@ export function AdminMetricsGrid({ metrics }: AdminMetricsGridProps) {
     {
       title: "Pendapatan Bulan Ini",
       value: formatCurrency(counts.revenue),
-      subText: `Dari ${metrics.transactionCount || 156} transaksi sukses`,
+      subText: `Dari ${metrics.transactionCount || 0} transaksi sukses`,
       trend: "+15.3%",
       trendDirection: "up",
       icon: DollarSign,
@@ -76,8 +76,8 @@ export function AdminMetricsGrid({ metrics }: AdminMetricsGridProps) {
     {
       title: "Total Pengguna",
       value: counts.users.toLocaleString("id-ID"),
-      subText: `+${metrics.newUsersThisWeek || 42} pengguna baru minggu ini`,
-      trend: `+${metrics.newUsersThisWeek || 42}`,
+      subText: `+${metrics.newUsersThisWeek || 0} pengguna baru minggu ini`,
+      trend: `+${metrics.newUsersThisWeek || 0}`,
       trendDirection: "up",
       icon: Users,
       iconBg: "bg-[#1164b8]/10 text-[#1164b8]",

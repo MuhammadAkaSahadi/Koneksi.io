@@ -13,7 +13,17 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 
-// Dummy data for different ranges
+interface ChartDataPoint {
+  name: string;
+  pendapatan: number;
+  registrasi: number;
+}
+
+interface AdminRevenueChartProps {
+  data?: ChartDataPoint[];
+}
+
+// Dummy data for different ranges (fallback)
 const data7Days = [
   { name: "Senin", pendapatan: 1500000, registrasi: 12 },
   { name: "Selasa", pendapatan: 2450000, registrasi: 18 },
@@ -22,13 +32,6 @@ const data7Days = [
   { name: "Jumat", pendapatan: 1800000, registrasi: 14 },
   { name: "Sabtu", pendapatan: 4500000, registrasi: 32 },
   { name: "Minggu", pendapatan: 2900000, registrasi: 21 },
-];
-
-const data30Days = [
-  { name: "Minggu 1", pendapatan: 12450000, registrasi: 84 },
-  { name: "Minggu 2", pendapatan: 18900000, registrasi: 110 },
-  { name: "Minggu 3", pendapatan: 15200000, registrasi: 92 },
-  { name: "Minggu 4", pendapatan: 24150000, registrasi: 165 },
 ];
 
 const data90Days = [
@@ -83,7 +86,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function AdminRevenueChart() {
+export function AdminRevenueChart({ data }: AdminRevenueChartProps) {
   const [range, setRange] = useState<"7d" | "30d" | "90d" | "1y">("30d");
 
   const getChartData = () => {
@@ -91,13 +94,19 @@ export function AdminRevenueChart() {
       case "7d":
         return data7Days;
       case "30d":
-        return data30Days;
+        // Use real data if available, otherwise fallback to mock
+        return data && data.length > 0 ? data : [
+          { name: "Minggu 1", pendapatan: 0, registrasi: 0 },
+          { name: "Minggu 2", pendapatan: 0, registrasi: 0 },
+          { name: "Minggu 3", pendapatan: 0, registrasi: 0 },
+          { name: "Minggu 4", pendapatan: 0, registrasi: 0 },
+        ];
       case "90d":
         return data90Days;
       case "1y":
         return data1Year;
       default:
-        return data30Days;
+        return data || [];
     }
   };
 

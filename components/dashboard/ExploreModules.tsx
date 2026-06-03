@@ -56,10 +56,10 @@ export function ExploreModules({ themes }: ExploreModulesProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white font-heading">
+          <h2 className="text-lg font-bold text-slate-900 font-heading">
             Eksplorasi Modul Lainnya
           </h2>
-          <p className="text-xs text-zinc-550 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Dapatkan akses penuh ke modul IoT terapan buatan pakar industri
           </p>
         </div>
@@ -73,11 +73,11 @@ export function ExploreModules({ themes }: ExploreModulesProps) {
           return (
             <div
               key={theme.id}
-              className="group bg-[#16161a] rounded-2xl border border-zinc-850 overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl hover:border-zinc-700/60"
+              className="group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.05)] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-slate-350"
             >
               <div>
                 {/* 1. Thumbnail Area with Overlay badge */}
-                <div className="relative aspect-video bg-zinc-900 overflow-hidden border-b border-zinc-850">
+                <div className="relative aspect-video bg-slate-50 overflow-hidden border-b border-slate-100">
                   {theme.thumbnail_url ? (
                     <img
                       src={theme.thumbnail_url}
@@ -85,8 +85,8 @@ export function ExploreModules({ themes }: ExploreModulesProps) {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center">
-                      <BookOpen className="h-8 w-8 text-zinc-650" />
+                    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                      <BookOpen className="h-8 w-8 text-slate-400" />
                     </div>
                   )}
                   <span className="absolute top-3 left-3 bg-[#0891b2] text-white font-extrabold text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
@@ -100,30 +100,30 @@ export function ExploreModules({ themes }: ExploreModulesProps) {
                     {category}
                   </span>
                   
-                  <h4 className="text-[15px] font-bold text-white font-heading leading-snug line-clamp-2 group-hover:text-[#0891b2] transition-colors">
+                  <h4 className="text-[15px] font-bold text-slate-800 font-heading leading-snug line-clamp-2 group-hover:text-[#0891b2] transition-colors">
                     {theme.title}
                   </h4>
 
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-semibold">
-                    <Clock className="h-3.5 w-3.5 text-zinc-650" />
+                  <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
+                    <Clock className="h-3.5 w-3.5 text-slate-400" />
                     <span>{meta}</span>
                   </div>
                 </div>
               </div>
 
               {/* 3. Footer Price & CTA */}
-              <div className="px-5 pb-5 pt-3 border-t border-zinc-800/60 flex items-center justify-between">
+              <div className="px-5 pb-5 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">
                     Investasi Belajar
                   </span>
-                  <span className="text-sm font-extrabold text-white font-heading">
+                  <span className="text-sm font-extrabold text-slate-900 font-heading">
                     {formatCurrency(Number(theme.price_lifetime))}
                   </span>
                 </div>
 
                 <Link href={`/katalog/${theme.slug}`}>
-                  <button className="h-9 w-9 rounded-lg bg-zinc-800 hover:bg-[#0891b2] text-zinc-400 hover:text-white flex items-center justify-center transition-all group-hover:translate-x-0.5 shadow-sm cursor-pointer border-0">
+                  <button className="h-9 w-9 rounded-lg bg-slate-100 hover:bg-[#0891b2] text-slate-500 hover:text-white flex items-center justify-center transition-all group-hover:translate-x-0.5 shadow-sm cursor-pointer border-0">
                     <ArrowRight className="h-4.5 w-4.5" />
                   </button>
                 </Link>

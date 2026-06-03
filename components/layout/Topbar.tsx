@@ -80,15 +80,12 @@ export function Topbar({ user, profile, isAdmin, onMenuClick, isAdminRoute }: To
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className={cn(
-      "sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b px-4 sm:gap-x-6 sm:px-6 lg:px-8 transition-colors duration-300",
-      isAdminRoute ? "bg-[#FFFFFF] border-slate-200" : "bg-[#0a0a0c] border-[#1a1a1f] text-white"
-    )}>
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-slate-200 bg-[#FFFFFF] text-slate-800 px-4 sm:gap-x-6 sm:px-6 lg:px-8 transition-colors duration-300">
       {/* Menu Hamburger untuk Mobile */}
       <button
         type="button"
         onClick={onMenuClick}
-        className="text-slate-450 hover:text-white lg:hidden p-1 mr-2"
+        className="text-slate-500 hover:text-slate-900 lg:hidden p-1 mr-2"
         aria-label="Open sidebar"
       >
         <Menu className="h-6 w-6" />
@@ -116,7 +113,7 @@ export function Topbar({ user, profile, isAdmin, onMenuClick, isAdminRoute }: To
             ))}
           </nav>
         ) : (
-          <span className="text-white font-bold font-heading text-lg md:text-xl hidden md:block">
+          <span className="text-slate-800 font-bold font-heading text-lg md:text-xl hidden md:block">
             {!isAdminRoute && (pathname.startsWith("/dashboard/courses") ? "Modul Saya" : pathname.startsWith("/dashboard/transactions") ? "Riwayat Transaksi" : pathname.startsWith("/dashboard/settings") ? "Pengaturan Profil" : "Dashboard")}
           </span>
         )}
@@ -140,7 +137,7 @@ export function Topbar({ user, profile, isAdmin, onMenuClick, isAdminRoute }: To
               "block w-full rounded-full border py-2 pl-10 pr-4 text-sm transition-all outline-none",
               isAdminRoute 
                 ? "border-slate-200 bg-[#F8FAFC] text-slate-900 placeholder:text-slate-400 focus:border-[#1164b8] focus:bg-white focus:ring-2 focus:ring-[#1164b8]/10"
-                : "border-zinc-800 bg-[#16161a] text-white placeholder-slate-500 focus:border-[#0891b2] focus:bg-[#1a1a20] focus:ring-2 focus:ring-[#0891b2]/20"
+                : "border-slate-200 bg-[#F8FAFC] text-slate-900 placeholder:text-slate-400 focus:border-[#0891b2] focus:bg-white focus:ring-2 focus:ring-[#0891b2]/10"
             )}
             placeholder={isAdminRoute ? "Cari transaksi, modul, pengguna..." : "Cari modul belajar..."}
             type="search"

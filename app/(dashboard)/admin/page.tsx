@@ -90,14 +90,114 @@ export default async function AdminDashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
+  // 3. Ambil data untuk revenue chart (30 hari terakhir, dikelompokkan per hari)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: revenueData } = await supabase
+    .from("transactions")
+    .select("created_at, total_amount, status")
+    .eq("status", "success")
+    .gte("created_at", thirtyDaysAgo.toISOString())
+    .order("created_at", { ascending: true });
+
+  // 4. Ambil data untuk registrasi pengguna (30 hari terakhir)
+  const { data: registrationData } = await supabase
+    .from("profiles")
+    .select("created_at")
+    .gte("created_at", thirtyDaysAgo.toISOString())
+    .order("created_at", { ascending: true });
+
+  // 5. Ambil data top modules berdasarkan penjualan
+  const { data: topModulesData } = await supabase
+    .from("transactions")
+    .select("item_name, total_amount")
+    .eq("status", "success");
+
+  // Proses data top modules
+  const modulesSales = topModulesData?.reduce((acc: any, tx) => {
+    const name = tx.item_name;
+    if (!acc[name]) {
+      acc[name] = { salesCount: 0, revenue: 0 };
+    }
+    acc[name].salesCount += 1;
+    acc[name].revenue += Number(tx.total_amount);
+    return acc;
+  }, {});
+
+  const sortedModules = Object.entries(modulesSales || {})
+    .map(([title, data]: [string, any]) => ({
+      title,
+      salesCount: data.salesCount,
+      revenue: data.revenue,
+    }))
+    .sort((a, b) => b.revenue - a.revenue);
+
+  const topRevenue = sortedModules[0]?.revenue || 1;
+
+  const topModules = sortedModules
+    .slice(0, 5)
+    .map((module, index) => ({
+      ...module,
+      rank: index + 1,
+      percentage: Math.round((module.revenue / topRevenue) * 100),
+    }));
+
+  // Proses data chart: kelompokkan per hari untuk 30 hari terakhir
+  const chartDataMap = new Map<string, { pendapatan: number; registrasi: number }>();
+
+  // Initialize last 30 days
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const key = date.toISOString().split('T')[0];
+    chartDataMap.set(key, { pendapatan: 0, registrasi: 0 });
+  }
+
+  // Populate revenue data
+  revenueData?.forEach((tx) => {
+    const dateKey = tx.created_at.split('T')[0];
+    if (chartDataMap.has(dateKey)) {
+      const existing = chartDataMap.get(dateKey)!;
+      existing.pendapatan += Number(tx.total_amount);
+    }
+  });
+
+  // Populate registration data
+  registrationData?.forEach((profile) => {
+    const dateKey = profile.created_at.split('T')[0];
+    if (chartDataMap.has(dateKey)) {
+      const existing = chartDataMap.get(dateKey)!;
+      existing.registrasi += 1;
+    }
+  });
+
+  // Convert to array and group by week (4 weeks)
+  const dailyData = Array.from(chartDataMap.entries()).map(([date, data]) => ({
+    date,
+    ...data
+  }));
+
+  const revenueChartData = [];
+  for (let i = 0; i < 4; i++) {
+    const weekData = dailyData.slice(i * 7, (i + 1) * 7 + (i === 3 ? 2 : 0)); // Last week gets extra days
+    const weekRevenue = weekData.reduce((sum, d) => sum + d.pendapatan, 0);
+    const weekRegistrations = weekData.reduce((sum, d) => sum + d.registrasi, 0);
+    revenueChartData.push({
+      name: `Minggu ${i + 1}`,
+      pendapatan: weekRevenue,
+      registrasi: weekRegistrations
+    });
+  }
+
   // Satukan data metrik
   const metrics = {
-    revenueThisMonth: revenueThisMonth || 12450000,
-    transactionCount: transactionCount || 156,
-    totalUsers: totalUsers || 1234,
-    newUsersThisWeek: newUsersThisWeek || 42,
-    activeSubscriptions: activeSubscriptions || 487,
-    pendingTransactions: pendingTransactions || 23
+    revenueThisMonth: revenueThisMonth || 0,
+    transactionCount: transactionCount || 0,
+    totalUsers: totalUsers || 0,
+    newUsersThisWeek: newUsersThisWeek || 0,
+    activeSubscriptions: activeSubscriptions || 0,
+    pendingTransactions: pendingTransactions || 0
   };
 
   const formatCurrency = (val: number) => {
@@ -159,10 +259,10 @@ export default async function AdminDashboardPage() {
       {/* Baris Asimetris Chart & Top Modules */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <AdminRevenueChart />
+          <AdminRevenueChart data={revenueChartData} />
         </div>
         <div className="lg:col-span-1">
-          <AdminTopModules />
+          <AdminTopModules modules={topModules} />
         </div>
       </div>
 

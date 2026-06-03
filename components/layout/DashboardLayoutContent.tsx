@@ -109,8 +109,7 @@ export function DashboardLayoutContent({
   return (
     <LayoutContext.Provider value={{ isMobileOpen, setIsMobileOpen, isCollapsed, setIsCollapsed }}>
       <div className={cn(
-        "flex min-h-screen transition-colors duration-300",
-        isAdminRoute ? "bg-[#F8FAFC]" : "bg-[#0c0d0f] text-slate-100 dark"
+        "flex min-h-screen transition-colors duration-300 bg-[#F8FAFC]"
       )}>
         {/* Responsive Mobile Alert for Admin */}
         {isAdminRoute && showWarning && (

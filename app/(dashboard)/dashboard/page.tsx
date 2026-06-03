@@ -209,16 +209,16 @@ export default async function DashboardPage() {
       {/* 1. Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-heading tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight">
             Halo, {buyerName} 👋
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-450 font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
             Pantau perkembangan aktivitas, progres belajar, dan modul kamu hari ini.
           </p>
         </div>
 
         {/* Date/Time Indicator */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-[#16161a] rounded-xl border border-zinc-850 shadow-md text-xs font-semibold text-zinc-400 max-w-fit">
+        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] text-xs font-semibold text-slate-600 max-w-fit">
           <Calendar className="h-4 w-4 text-[#0891b2]" />
           <span>{indonesianDate}</span>
         </div>
@@ -229,7 +229,7 @@ export default async function DashboardPage() {
 
       {/* 3. Section Lanjutkan Belajar */}
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-white font-heading">
+        <h2 className="text-lg font-bold text-slate-900 font-heading">
           Lanjutkan Belajar
         </h2>
         <ContinueLearning latestProgress={latestProgress} />
