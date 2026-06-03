@@ -71,8 +71,8 @@ export function Sidebar({
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Modul Saya", href: "/dashboard/courses", icon: BookOpen },
     { name: "Sertifikat", href: "/dashboard/certificates", icon: Award },
-    { name: "Transaksi", href: "/dashboard/transactions", icon: CreditCard },
-    { name: "Pengaturan", href: "/dashboard/settings", icon: Settings },
+    // { name: "Transaksi", href: "/dashboard/transactions", icon: CreditCard },
+    // { name: "Pengaturan", href: "/dashboard/settings", icon: Settings },
     { name: "Komunitas", href: "https://discord.gg/koneksiio", icon: MessageSquare, isExternal: true, badge: "Discord" },
   ];
 
@@ -155,36 +155,6 @@ export function Sidebar({
 
         {/* Bagian Bawah Admin */}
         <div className="border-t border-white/10 p-4 space-y-4">
-          {/* Profile Card */}
-          <div className={cn(
-            "flex items-center rounded-lg bg-white/5 transition-all duration-200",
-            isCollapsed ? "justify-center p-2" : "p-3 justify-between"
-          )}>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9 border border-white/10">
-                {profile?.avatar_url ? (
-                  <AvatarImage src={profile.avatar_url} alt={profile.full_name || ""} />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                    {userInitials}
-                  </div>
-                )}
-                <AvatarFallback>{userInitials}</AvatarFallback>
-              </Avatar>
-              {!isCollapsed && (
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-semibold truncate text-white leading-tight">
-                    {profile?.full_name || "Admin Utama"}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    Super Admin
-                  </span>
-                </div>
-              )}
-            </div>
-            {!isCollapsed && <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />}
-          </div>
-
           {/* Logout Button */}
           <button
             onClick={handleSignout}
