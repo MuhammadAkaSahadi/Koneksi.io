@@ -25,7 +25,7 @@ export function TopAlertBanner({ onClose }: TopAlertBannerProps) {
 
       <div className="flex items-center gap-2 shrink-0">
         <Button
-          onClick={() => router.push("/dashboard/settings")}
+          onClick={() => router.push("/dashboard/profiles")}
           size="sm"
           className="bg-[#F59E0B] hover:bg-[#F59E0B]/90 text-white font-bold text-xs px-3 h-8 rounded-lg shadow-sm border-0"
         >

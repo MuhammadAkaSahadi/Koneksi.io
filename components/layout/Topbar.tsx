@@ -114,7 +114,7 @@ export function Topbar({ user, profile, isAdmin, onMenuClick, isAdminRoute }: To
           </nav>
         ) : (
           <span className="text-slate-800 font-bold font-heading text-lg md:text-xl hidden md:block">
-            {!isAdminRoute && (pathname.startsWith("/dashboard/courses") ? "Modul Saya" : pathname.startsWith("/dashboard/transactions") ? "Riwayat Transaksi" : pathname.startsWith("/dashboard/settings") ? "Pengaturan Profil" : "Dashboard")}
+            {!isAdminRoute && (pathname.startsWith("/dashboard/courses") ? "Modul Saya" : pathname.startsWith("/dashboard/transactions") ? "Riwayat Transaksi" : pathname.startsWith("/dashboard/profiles") ? "Pengaturan Profil" : "Dashboard")}
           </span>
         )}
       </div>
