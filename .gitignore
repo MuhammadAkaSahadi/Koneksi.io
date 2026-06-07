@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# .md files
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+handoff.md
+
+# Etc
+.claude

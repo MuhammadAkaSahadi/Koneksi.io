@@ -1,10 +1,9 @@
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProgressChart } from "@/components/dashboard/ProgressChart";
-import { BookOpen, Trophy, Clock } from "lucide-react";
-import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Calendar, BookOpen } from "lucide-react";
+import { StatsWidgetGrid } from "@/components/dashboard/StatsWidgetGrid";
+import { ContinueLearning } from "@/components/dashboard/ContinueLearning";
+import { ExploreModules } from "@/components/dashboard/ExploreModules";
 
 export const metadata = {
   title: "Dashboard | Koneksi.io",
@@ -22,7 +21,7 @@ export default async function DashboardPage() {
   const adminClient = createAdminClient();
   const { data: profile } = await adminClient
     .from("profiles")
-    .select("is_admin")
+    .select("*")
     .eq("id", user.id)
     .single();
 
@@ -30,123 +29,217 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
+  // Fetch subscriptions
+  const { data: activeSub } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .gte("end_date", new Date().toISOString())
+    .maybeSingle();
+
   // Fetch enrollments
   const { data: enrollments } = await supabase
     .from("enrollments")
     .select("*, themes(*)")
     .eq("user_id", user.id);
 
-  // Fetch progress (dummy or real depending on data)
-  const { data: progress } = await supabase
-    .from("user_progress")
-    .select("*, lessons(*)")
-    .eq("user_id", user.id);
+  const enrolledThemeIds = enrollments?.map((e: any) => e.theme_id).filter(Boolean) || [];
 
-  const completedLessons = progress?.filter((p: any) => p.is_completed).length || 0;
-  
-  // Dummy chart data showing learning activity over a few months
-  const chartData = [
-    { name: "Jan", total: Math.floor(Math.random() * 10) },
-    { name: "Feb", total: Math.floor(Math.random() * 15) },
-    { name: "Mar", total: Math.floor(Math.random() * 20) },
-    { name: "Apr", total: Math.floor(Math.random() * 25) },
-    { name: "Mei", total: completedLessons || Math.floor(Math.random() * 30) },
-  ];
+  // Hitung stats & progress secara dinamis
+  let totalClasses = enrolledThemeIds.length;
+  let inProgressClasses = 0;
+  let certificatesCount = 0;
+  let latestProgress: any = null;
+
+  if (enrolledThemeIds.length > 0) {
+    // Ambil chapter dari tema yang dimiliki
+    const { data: chapters } = await supabase
+      .from("chapters")
+      .select("id, theme_id")
+      .in("theme_id", enrolledThemeIds);
+
+    const chapterIds = chapters?.map((c) => c.id) || [];
+
+    // Ambil seluruh lesson untuk chapters tersebut
+    let lessons: any[] = [];
+    if (chapterIds.length > 0) {
+      const { data: lessonsData } = await supabase
+        .from("lessons")
+        .select("id, chapter_id, title")
+        .in("chapter_id", chapterIds);
+      lessons = lessonsData || [];
+    }
+
+    // Ambil riwayat progres belajar user
+    const { data: progress } = await supabase
+      .from("user_progress")
+      .select("*, lessons(*, chapters(*, themes(*)))")
+      .eq("user_id", user.id);
+
+    // Hitung progress per tema
+    const themeProgressMap = new Map<string, { total: number; completed: number }>();
+    enrolledThemeIds.forEach((id) => {
+      themeProgressMap.set(id, { total: 0, completed: 0 });
+    });
+
+    // Petakan jumlah lesson ke tiap tema
+    lessons.forEach((lesson) => {
+      const chapter = chapters?.find((c) => c.id === lesson.chapter_id);
+      if (chapter) {
+        const current = themeProgressMap.get(chapter.theme_id);
+        if (current) {
+          current.total += 1;
+        }
+      }
+    });
+
+    // Petakan progres penyelesaian ke tiap tema
+    progress?.forEach((p) => {
+      if (p.is_completed) {
+        const chapter = chapters?.find((c) => c.id === p.lessons?.chapter_id);
+        if (chapter) {
+          const current = themeProgressMap.get(chapter.theme_id);
+          if (current) {
+            current.completed += 1;
+          }
+        }
+      }
+    });
+
+    // Hitung berapa modul yang in-progress dan selesai (sertifikat)
+    themeProgressMap.forEach((val, themeId) => {
+      if (val.total > 0) {
+        const percent = Math.round((val.completed / val.total) * 100);
+        if (percent > 0 && percent < 100) {
+          inProgressClasses += 1;
+        } else if (percent === 100) {
+          certificatesCount += 1;
+        }
+      }
+    });
+
+    // Dapatkan data modul terakhir yang diakses berdasarkan updated_at
+    if (progress && progress.length > 0) {
+      const sortedProgress = [...progress].sort((a, b) => {
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      });
+
+      const latest = sortedProgress[0];
+      if (latest && latest.lessons?.chapters?.themes) {
+        const theme = latest.lessons.chapters.themes;
+        const themeProgress = themeProgressMap.get(theme.id);
+        const pct = themeProgress && themeProgress.total > 0 
+          ? Math.round((themeProgress.completed / themeProgress.total) * 100)
+          : 0;
+
+        latestProgress = {
+          themeTitle: theme.title,
+          themeSlug: theme.slug,
+          lessonTitle: latest.lessons.title,
+          lessonId: latest.lessons.id,
+          category: theme.title.toLowerCase().includes("esp32") ? "Hardware (IoT)" : "IoT Cloud / Web",
+          thumbnailUrl: theme.thumbnail_url,
+          progressPercent: pct
+        };
+      }
+    }
+
+    // Fallback ke tema pertama jika progress belum terbuat sama sekali
+    if (!latestProgress && enrollments && enrollments.length > 0) {
+      const firstEnroll = enrollments[0];
+      if (firstEnroll.themes) {
+        const themeId = firstEnroll.themes.id;
+        const firstThemeChapter = chapters?.find((c) => c.theme_id === themeId);
+        let firstLesson: any = null;
+        if (firstThemeChapter) {
+          firstLesson = lessons.find((l) => l.chapter_id === firstThemeChapter.id);
+        }
+
+        latestProgress = {
+          themeTitle: firstEnroll.themes.title,
+          themeSlug: firstEnroll.themes.slug,
+          lessonTitle: firstLesson ? firstLesson.title : "Setup & Pendahuluan",
+          lessonId: firstLesson ? firstLesson.id : "",
+          category: firstEnroll.themes.title.toLowerCase().includes("esp32") ? "Hardware (IoT)" : "IoT Cloud / Web",
+          thumbnailUrl: firstEnroll.themes.thumbnail_url,
+          progressPercent: 0
+        };
+      }
+    }
+  }
+
+  // Tentukan paket keanggotaan
+  let packageStatus: "lifetime" | "subscription" | "trial" | "expired" = "trial";
+  if (activeSub) {
+    packageStatus = "subscription";
+  } else if (totalClasses > 0) {
+    packageStatus = "lifetime";
+  }
+
+  // Ambil data modul rekomendasi (modul yang belum dimiliki oleh user)
+  let exploreQuery = supabase.from("themes").select("*");
+  if (enrolledThemeIds.length > 0) {
+    // Supabase JS syntax untuk not in: .not("id", "in", '("uuid1","uuid2")')
+    const formattedIds = enrolledThemeIds.map(id => `"${id}"`).join(",");
+    exploreQuery = exploreQuery.not("id", "in", `(${formattedIds})`);
+  }
+  const { data: exploreThemes } = await exploreQuery.limit(3);
+
+  // Ambil tanggal saat ini (Indonesian locale)
+  const indonesianDate = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+  const buyerName = profile?.full_name || "Sobat IoT";
+
+  const stats = {
+    packageStatus,
+    totalClasses,
+    inProgressClasses,
+    certificatesCount
+  };
 
   return (
-    <div className="space-y-6 p-6 md:p-8">
-      <div className="flex flex-col space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Ikhtisar Dashboard</h2>
-        <p className="text-slate-500">Pantau perkembangan aktivitas, progres belajar, dan kursus Anda hari ini.</p>
+    <div className="space-y-8 animate-in fade-in duration-300">
+      
+      {/* 1. Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight">
+            Halo, {buyerName} 👋
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            Pantau perkembangan aktivitas, progres belajar, dan modul kamu hari ini.
+          </p>
+        </div>
+
+        {/* Date/Time Indicator */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] text-xs font-semibold text-slate-600 max-w-fit">
+          <Calendar className="h-4 w-4 text-[#0891b2]" />
+          <span>{indonesianDate}</span>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Kursus Dimiliki</CardTitle>
-            <div className="p-2 bg-primary/10 rounded-md">
-              <BookOpen className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{enrollments?.length || 0}</div>
-            <p className="text-xs text-slate-500 mt-1">Materi premium yang bisa diakses</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Materi Selesai</CardTitle>
-            <div className="p-2 bg-emerald-500/10 rounded-md">
-              <Trophy className="h-4 w-4 text-emerald-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{completedLessons}</div>
-            <p className="text-xs text-slate-500 mt-1">Sub-bab telah diselesaikan</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Jam Belajar</CardTitle>
-            <div className="p-2 bg-amber-500/10 rounded-md">
-              <Clock className="h-4 w-4 text-amber-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">12j 30m</div>
-            <p className="text-xs text-slate-500 mt-1">Estimasi waktu belajar bulan ini</p>
-          </CardContent>
-        </Card>
+      {/* 2. Top Stats Widget (Grid 4 Kolom) */}
+      <StatsWidgetGrid stats={stats} />
+
+      {/* 3. Section Lanjutkan Belajar */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold text-slate-900 font-heading">
+          Lanjutkan Belajar
+        </h2>
+        <ContinueLearning latestProgress={latestProgress} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-border shadow-sm">
-          <CardHeader>
-            <CardTitle>Aktivitas Belajar</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ProgressChart data={chartData} />
-          </CardContent>
-        </Card>
-        <Card className="col-span-3 border-border shadow-sm">
-          <CardHeader>
-            <CardTitle>Kursus Saya</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {enrollments && enrollments.length > 0 ? (
-                enrollments.map((enrollment: any) => (
-                  <div key={enrollment.id} className="flex items-center">
-                    <div className="w-12 h-12 bg-slate-200 rounded overflow-hidden shrink-0 mr-4">
-                      {enrollment.themes?.thumbnail_url ? (
-                        <img src={enrollment.themes.thumbnail_url} alt="Course" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-slate-800" />
-                      )}
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-medium leading-none">{enrollment.themes?.title}</p>
-                      <p className="text-sm text-slate-500">Akses Lifetime</p>
-                    </div>
-                    <div className="ml-auto font-medium">
-                      <Link href={`/katalog/${enrollment.themes?.slug}`} className={buttonVariants({ size: "sm", variant: "outline" })}>
-                        Belajar
-                      </Link>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-slate-500 text-sm mb-4">Anda belum memiliki kursus premium.</p>
-                  <Link href="/katalog" className={buttonVariants({ variant: "outline", size: "sm" })}>
-                    Jelajahi Katalog
-                  </Link>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* 4. Section Eksplorasi Modul Lainnya */}
+      {exploreThemes && exploreThemes.length > 0 && (
+        <ExploreModules themes={exploreThemes} />
+      )}
+
     </div>
   );
 }

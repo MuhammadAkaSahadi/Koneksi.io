@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FaGithub, FaTwitter, FaLinkedin } from "react-icons/fa";
+import { FaGithub, FaTwitter, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 
 export function Footer() {
   return (
@@ -23,30 +23,30 @@ export function Footer() {
             <Link href="/katalog" className="text-sm hover:text-white transition-colors">Katalog Kursus</Link>
             <Link href="/katalog?category=software" className="text-sm hover:text-white transition-colors">Jalur Software</Link>
             <Link href="/katalog?category=hardware" className="text-sm hover:text-white transition-colors">Jalur Hardware (IoT)</Link>
-            <Link href="/pricing" className="text-sm hover:text-white transition-colors">Harga</Link>
+            {/* <Link href="/pricing" className="text-sm hover:text-white transition-colors">Harga</Link> */}
           </div>
 
           <div className="flex flex-col gap-3">
             <h4 className="font-semibold text-white mb-2">Perusahaan</h4>
             <Link href="/tentang" className="text-sm hover:text-white transition-colors">Tentang Kami</Link>
             <Link href="/faq" className="text-sm hover:text-white transition-colors">FAQ</Link>
-            <Link href="/hubungi" className="text-sm hover:text-white transition-colors">Hubungi Kami</Link>
-            <Link href="/syarat" className="text-sm hover:text-white transition-colors">Syarat Layanan</Link>
-            <Link href="/privasi" className="text-sm hover:text-white transition-colors">Kebijakan Privasi</Link>
+            {/* <Link href="wa.me/62895368413511" className="text-sm hover:text-white transition-colors">Hubungi Kami</Link> */}
+            {/* <Link href="/syarat" className="text-sm hover:text-white transition-colors">Syarat Layanan</Link>
+            <Link href="/privasi" className="text-sm hover:text-white transition-colors">Kebijakan Privasi</Link> */}
           </div>
 
           <div className="flex flex-col gap-4">
             <h4 className="font-semibold text-white mb-2">Terhubung</h4>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-white transition-colors" aria-label="Twitter">
-                <FaTwitter className="h-5 w-5" />
+              <a href="wa.me/62895368413511" className="hover:text-white transition-colors" aria-label="Twitter">
+                <FaWhatsapp className="h-5 w-5" />
               </a>
-              <a href="#" className="hover:text-white transition-colors" aria-label="LinkedIn">
+              {/* <a href="#" className="hover:text-white transition-colors" aria-label="LinkedIn">
                 <FaLinkedin className="h-5 w-5" />
               </a>
               <a href="#" className="hover:text-white transition-colors" aria-label="GitHub">
                 <FaGithub className="h-5 w-5" />
-              </a>
+              </a> */}
             </div>
           </div>
         </div>

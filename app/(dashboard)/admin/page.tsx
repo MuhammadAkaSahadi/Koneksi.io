@@ -3,8 +3,12 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, DollarSign, CreditCard, Activity } from "lucide-react";
-import { ProgressChart } from "@/components/dashboard/ProgressChart";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminMetricsGrid } from "@/components/dashboard/AdminMetricsGrid";
+import { AdminRevenueChart } from "@/components/dashboard/AdminRevenueChart";
+import { AdminTopModules } from "@/components/dashboard/AdminTopModules";
+import { ArrowRight, Clock, CheckCircle, XCircle } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = {
   title: "Admin Dashboard | Koneksi.io",
@@ -18,7 +22,7 @@ export default async function AdminDashboardPage() {
     redirect("/login");
   }
 
-  // Check admin role
+  // Cek role admin via service role client (bypass RLS)
   const adminClient = createAdminClient();
   const { data: profile } = await adminClient
     .from("profiles")
@@ -27,143 +31,341 @@ export default async function AdminDashboardPage() {
     .single();
 
   if (!profile?.is_admin) {
-    redirect("/dashboard"); // Redirect to normal dashboard if not admin
+    redirect("/dashboard"); // Pengalihan jika bukan admin
   }
 
-  // Fetch metrics
-  const { count: totalUsers } = await supabase.from("profiles").select("*", { count: "exact", head: true });
-  
-  const { data: transactions } = await supabase
+  // 1. Ambil data metrik dari Supabase secara paralel
+  const [
+    { count: totalUsers },
+    { count: newUsersThisWeek },
+    { count: activeSubscriptions },
+    { count: pendingTransactions }
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+    supabase
+      .from("subscriptions")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .gte("end_date", new Date().toISOString()),
+    supabase
+      .from("transactions")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+  ]);
+
+  // Ambil transaksi sukses bulan ini untuk hitung pendapatan
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const { data: thisMonthTransactions } = await supabase
     .from("transactions")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("total_amount")
+    .eq("status", "success")
+    .gte("created_at", startOfMonth.toISOString());
 
-  const successTransactions = transactions?.filter(t => t.status === "success") || [];
-  const totalRevenue = successTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0);
+  const revenueThisMonth = thisMonthTransactions?.reduce((sum, tx) => sum + Number(tx.total_amount), 0) || 0;
+  const transactionCount = thisMonthTransactions?.length || 0;
 
-  // Generate sales data for chart
-  // Grouping by date loosely for dummy chart if needed, but let's just make a weekly dummy data or from real data
-  const chartData = [
-    { name: "Senin", total: 1200000 },
-    { name: "Selasa", total: 2450000 },
-    { name: "Rabu", total: 950000 },
-    { name: "Kamis", total: 3100000 },
-    { name: "Jumat", total: 1800000 },
-    { name: "Sabtu", total: totalRevenue > 0 ? totalRevenue : 4500000 }, // using actual or dummy
-  ];
+  // 2. Ambil 5 transaksi terbaru beserta info profil pembeli
+  const { data: recentTransactions } = await supabase
+    .from("transactions")
+    .select(`
+      id,
+      transaction_id_midtrans,
+      item_name,
+      total_amount,
+      status,
+      created_at,
+      profiles (
+        full_name,
+        avatar_url,
+        email
+      )
+    `)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  // 3. Ambil data untuk revenue chart (30 hari terakhir, dikelompokkan per hari)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: revenueData } = await supabase
+    .from("transactions")
+    .select("created_at, total_amount, status")
+    .eq("status", "success")
+    .gte("created_at", thirtyDaysAgo.toISOString())
+    .order("created_at", { ascending: true });
+
+  // 4. Ambil data untuk registrasi pengguna (30 hari terakhir)
+  const { data: registrationData } = await supabase
+    .from("profiles")
+    .select("created_at")
+    .gte("created_at", thirtyDaysAgo.toISOString())
+    .order("created_at", { ascending: true });
+
+  // 5. Ambil data top modules berdasarkan penjualan
+  const { data: topModulesData } = await supabase
+    .from("transactions")
+    .select("item_name, total_amount")
+    .eq("status", "success");
+
+  // Proses data top modules
+  const modulesSales = topModulesData?.reduce((acc: any, tx) => {
+    const name = tx.item_name;
+    if (!acc[name]) {
+      acc[name] = { salesCount: 0, revenue: 0 };
+    }
+    acc[name].salesCount += 1;
+    acc[name].revenue += Number(tx.total_amount);
+    return acc;
+  }, {});
+
+  const sortedModules = Object.entries(modulesSales || {})
+    .map(([title, data]: [string, any]) => ({
+      title,
+      salesCount: data.salesCount,
+      revenue: data.revenue,
+    }))
+    .sort((a, b) => b.revenue - a.revenue);
+
+  const topRevenue = sortedModules[0]?.revenue || 1;
+
+  const topModules = sortedModules
+    .slice(0, 5)
+    .map((module, index) => ({
+      ...module,
+      rank: index + 1,
+      percentage: Math.round((module.revenue / topRevenue) * 100),
+    }));
+
+  // Proses data chart: kelompokkan per hari untuk 30 hari terakhir
+  const chartDataMap = new Map<string, { pendapatan: number; registrasi: number }>();
+
+  // Initialize last 30 days
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const key = date.toISOString().split('T')[0];
+    chartDataMap.set(key, { pendapatan: 0, registrasi: 0 });
+  }
+
+  // Populate revenue data
+  revenueData?.forEach((tx) => {
+    const dateKey = tx.created_at.split('T')[0];
+    if (chartDataMap.has(dateKey)) {
+      const existing = chartDataMap.get(dateKey)!;
+      existing.pendapatan += Number(tx.total_amount);
+    }
+  });
+
+  // Populate registration data
+  registrationData?.forEach((profile) => {
+    const dateKey = profile.created_at.split('T')[0];
+    if (chartDataMap.has(dateKey)) {
+      const existing = chartDataMap.get(dateKey)!;
+      existing.registrasi += 1;
+    }
+  });
+
+  // Convert to array and group by week (4 weeks)
+  const dailyData = Array.from(chartDataMap.entries()).map(([date, data]) => ({
+    date,
+    ...data
+  }));
+
+  const revenueChartData = [];
+  for (let i = 0; i < 4; i++) {
+    const weekData = dailyData.slice(i * 7, (i + 1) * 7 + (i === 3 ? 2 : 0)); // Last week gets extra days
+    const weekRevenue = weekData.reduce((sum, d) => sum + d.pendapatan, 0);
+    const weekRegistrations = weekData.reduce((sum, d) => sum + d.registrasi, 0);
+    revenueChartData.push({
+      name: `Minggu ${i + 1}`,
+      pendapatan: weekRevenue,
+      registrasi: weekRegistrations
+    });
+  }
+
+  // Satukan data metrik
+  const metrics = {
+    revenueThisMonth: revenueThisMonth || 0,
+    transactionCount: transactionCount || 0,
+    totalUsers: totalUsers || 0,
+    newUsersThisWeek: newUsersThisWeek || 0,
+    activeSubscriptions: activeSubscriptions || 0,
+    pendingTransactions: pendingTransactions || 0
+  };
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0
+    }).format(val);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "success":
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#D1FAE5] text-[#065F46] px-2.5 py-0.5 rounded-full">
+            <CheckCircle className="h-3 w-3 text-[#10B981]" />
+            Success
+          </span>
+        );
+      case "pending":
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] px-2.5 py-0.5 rounded-full animate-pulse">
+            <Clock className="h-3 w-3 text-[#F59E0B]" />
+            Pending
+          </span>
+        );
+      case "cancelled":
+      case "failed":
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#FEE2E2] text-[#991B1B] px-2.5 py-0.5 rounded-full">
+            <XCircle className="h-3 w-3 text-[#EF4444]" />
+            Cancelled
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full">
+            {status}
+          </span>
+        );
+    }
+  };
 
   return (
-    <div className="space-y-6 p-6 md:p-8">
-      <div className="flex flex-col space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Ikhtisar Dashboard</h2>
-        <p className="text-slate-500">Pantau perkembangan pengguna, transaksi, dan aktivitas kursus hari ini.</p>
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Welcome Title */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          Ikhtisar Dashboard
+        </h1>
+        <p className="text-slate-500 text-sm">
+          Pantau perkembangan pengguna, transaksi, dan aktivitas kursus IoT secara real-time.
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Pengguna Aktif</CardTitle>
-            <div className="p-2 bg-primary/10 rounded-md">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{totalUsers || 0}</div>
-            <p className="text-xs text-emerald-500 font-medium mt-1">↑ 12.5% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Transaksi</CardTitle>
-            <div className="p-2 bg-rose-500/10 rounded-md">
-              <CreditCard className="h-4 w-4 text-rose-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{successTransactions.length}</div>
-            <p className="text-xs text-emerald-500 font-medium mt-1">↑ 8.3% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Pendapatan</CardTitle>
-            <div className="p-2 bg-emerald-500/10 rounded-md">
-              <DollarSign className="h-4 w-4 text-emerald-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalRevenue)}
-            </div>
-            <p className="text-xs text-emerald-500 font-medium mt-1">↑ 15.2% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Kursus</CardTitle>
-            <div className="p-2 bg-amber-500/10 rounded-md">
-              <Activity className="h-4 w-4 text-amber-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">12</div>
-            <p className="text-xs text-rose-500 font-medium mt-1">↓ 5.1% <span className="text-slate-400 font-normal">dari bulan lalu</span></p>
-          </CardContent>
-        </Card>
+      {/* Grid Metrik */}
+      <AdminMetricsGrid metrics={metrics} />
+
+      {/* Baris Asimetris Chart & Top Modules */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <AdminRevenueChart data={revenueChartData} />
+        </div>
+        <div className="lg:col-span-1">
+          <AdminTopModules modules={topModules} />
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-border shadow-sm">
-          <CardHeader>
-            <CardTitle>Overview Penjualan Mingguan</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ProgressChart data={chartData} />
-          </CardContent>
-        </Card>
-        <Card className="col-span-3 border-border shadow-sm overflow-hidden flex flex-col">
-          <CardHeader>
-            <CardTitle>Transaksi Terbaru</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-auto">
+      {/* Tabel Transaksi Terbaru */}
+      <Card className="border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] rounded-xl overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+          <div>
+            <CardTitle className="text-base font-bold text-slate-800 font-heading">
+              Transaksi Terbaru
+            </CardTitle>
+            <p className="text-xs text-slate-400 mt-0.5">
+              5 transaksi terakhir yang masuk ke dalam sistem pembayaran Midtrans
+            </p>
+          </div>
+          <Link 
+            href="/admin/transactions"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#1164b8] hover:text-[#1164b8]/85 group"
+          >
+            Lihat Semua Transaksi
+            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50 sticky top-0">
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+              <TableHeader className="bg-slate-50/80">
+                <TableRow className="border-b border-slate-100">
+                  <TableHead className="w-[12%] font-semibold text-slate-500 text-xs font-heading">ID Transaksi</TableHead>
+                  <TableHead className="w-[25%] font-semibold text-slate-500 text-xs font-heading">Nama Pengguna</TableHead>
+                  <TableHead className="w-[20%] font-semibold text-slate-500 text-xs font-heading">Modul / Paket</TableHead>
+                  <TableHead className="w-[18%] font-semibold text-slate-500 text-xs font-heading">Tanggal</TableHead>
+                  <TableHead className="w-[15%] text-right font-semibold text-slate-500 text-xs font-heading">Total</TableHead>
+                  <TableHead className="w-[10%] text-center font-semibold text-slate-500 text-xs font-heading">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions && transactions.length > 0 ? (
-                  transactions.slice(0, 10).map((trx: any) => (
-                    <TableRow key={trx.id}>
-                      <TableCell className="font-medium text-xs">
-                        {trx.transaction_id_midtrans}
-                        <div className="text-slate-500 mt-1 truncate max-w-[120px]">{trx.item_name}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={trx.status === "success" ? "default" : trx.status === "pending" ? "secondary" : "destructive"}>
-                          {trx.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(trx.total_amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                {recentTransactions && recentTransactions.length > 0 ? (
+                  recentTransactions.map((trx: any) => {
+                    const profileData = trx.profiles || {};
+                    const buyerName = profileData.full_name || "Pengguna";
+                    const buyerEmail = profileData.email || "No email";
+                    const initials = buyerName.substring(0, 2).toUpperCase();
+
+                    return (
+                      <TableRow key={trx.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                        <TableCell className="font-mono text-xs font-semibold text-[#1164b8]">
+                          {trx.transaction_id_midtrans}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8 ring-1 ring-slate-100">
+                              {profileData.avatar_url ? (
+                                <AvatarImage src={profileData.avatar_url} alt={buyerName} />
+                              ) : (
+                                <div className="h-full w-full bg-gradient-to-br from-slate-200 to-slate-350 flex items-center justify-center font-bold text-xs text-slate-600">
+                                  {initials}
+                                </div>
+                              )}
+                              <AvatarFallback>{initials}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-semibold text-slate-700 truncate leading-snug">
+                                {buyerName}
+                              </span>
+                              <span className="text-xs text-slate-400 truncate font-medium">
+                                {buyerEmail}
+                              </span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm font-semibold text-slate-600">
+                          {trx.item_name}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-500 font-medium">
+                          {new Date(trx.created_at).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-extrabold text-slate-900 font-heading">
+                          {formatCurrency(Number(trx.total_amount))}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getStatusBadge(trx.status)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24 text-slate-500">
-                      Belum ada transaksi.
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 text-sm">
+                      Belum ada transaksi terekam.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
