@@ -168,7 +168,7 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
           <Input
             id="phone"
             {...register("phone")}
-            placeholder="+628123456789"
+            placeholder="628123456789"
             className={errors.phone ? "border-destructive" : ""}
           />
           {errors.phone && (

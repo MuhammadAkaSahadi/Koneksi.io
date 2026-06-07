@@ -2,27 +2,31 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { 
-  Search, 
-  Download, 
-  ChevronLeft, 
-  ChevronRight, 
-  CheckCircle, 
-  Clock, 
-  XCircle, 
-  Copy, 
-  Trash2, 
-  Check, 
-  Inbox, 
+import {
+  Search,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Copy,
+  Trash2,
+  Check,
+  Inbox,
   AlertCircle,
   Activity,
   Calendar,
   X,
   CreditCard,
-  DollarSign
+  DollarSign,
+  Eye,
+  Hash
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TransferProofModal } from "@/components/dashboard/TransferProofModal";
+import { approveTransaction, rejectTransaction } from "@/app/(dashboard)/admin/transactions/actions";
 
 interface Transaction {
   id: string;
@@ -35,6 +39,7 @@ interface Transaction {
   status: string;
   payment_type: string | null;
   transfer_proof_url: string | null;
+  unique_code: number | null;
   created_at: string;
   profiles: {
     full_name: string | null;
@@ -61,6 +66,9 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
 
   // Side Drawer detail panel state
   const [activeTrxDetail, setActiveTrxDetail] = useState<Transaction | null>(null);
+
+  // Transfer proof modal state
+  const [viewingProof, setViewingProof] = useState<Transaction | null>(null);
 
   const itemsPerPage = 10;
   const supabase = useMemo(() => createClient(), []);
@@ -94,6 +102,7 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
               status: newTrx.status,
               payment_type: newTrx.payment_type,
               transfer_proof_url: newTrx.transfer_proof_url || null,
+              unique_code: newTrx.unique_code || null,
               created_at: newTrx.created_at,
               profiles: profile || null
             };
@@ -378,6 +387,25 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
       toast.error(`Gagal menolak pembayaran: ${err.message}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Individual approve/reject for QRIS transactions
+  const handleIndividualApprove = async (transactionId: string) => {
+    try {
+      await approveTransaction(transactionId);
+      toast.success("Transaksi berhasil diapprove");
+    } catch (error: any) {
+      toast.error(error.message || "Gagal approve transaksi");
+    }
+  };
+
+  const handleIndividualReject = async (transactionId: string) => {
+    try {
+      await rejectTransaction(transactionId);
+      toast.success("Transaksi berhasil ditolak");
+    } catch (error: any) {
+      toast.error(error.message || "Gagal reject transaksi");
     }
   };
 
@@ -685,6 +713,8 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
                 <th className="py-4 px-4 font-bold text-slate-500 text-xs font-heading">Tanggal</th>
                 <th className="py-4 px-4 font-bold text-slate-500 text-xs font-heading">Pembeli & Item</th>
                 <th className="py-4 px-4 font-bold text-slate-500 text-xs font-heading">Metode Bayar</th>
+                <th className="py-4 px-4 text-center font-bold text-slate-500 text-xs font-heading">Kode Unik</th>
+                <th className="py-4 px-4 text-center font-bold text-slate-500 text-xs font-heading">Bukti Transfer</th>
                 <th className="py-4 px-4 text-right font-bold text-slate-500 text-xs font-heading">Total Tagihan</th>
                 <th className="py-4 px-4 text-center font-bold text-slate-500 text-xs font-heading">Status</th>
                 <th className="py-4 px-6 text-right"></th>
@@ -699,11 +729,12 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
                   const isSelected = selectedIds.includes(trx.id);
 
                   return (
-                    <tr 
-                      key={trx.id} 
+                    <tr
+                      key={trx.id}
                       className={cn(
                         "border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer",
                         isSelected && "bg-indigo-50/20",
+                        trx.payment_type === 'qris_static' && "bg-emerald-50/30",
                         flashingRows[trx.id] === "insert" && "bg-emerald-50 border-l-[3px] border-emerald-500 animate-pulse",
                         flashingRows[trx.id] === "update" && "bg-amber-50 border-l-[3px] border-amber-500 animate-pulse"
                       )}
@@ -759,6 +790,32 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
                         {trx.payment_type || "Midtrans API"}
                       </td>
 
+                      {/* Kode Unik */}
+                      <td className="py-4 px-4 text-center">
+                        {trx.unique_code ? (
+                          <span className="font-mono font-bold text-primary text-sm">
+                            {trx.unique_code}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
+                      </td>
+
+                      {/* Bukti Transfer */}
+                      <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        {trx.transfer_proof_url ? (
+                          <button
+                            onClick={() => setViewingProof(trx)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs rounded-lg transition-all cursor-pointer border border-blue-200"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Lihat Bukti
+                          </button>
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
+                      </td>
+
                       {/* Total */}
                       <td className="py-4 px-4 text-right font-extrabold text-slate-900 font-heading">
                         {formatCurrency(Number(trx.total_amount))}
@@ -771,19 +828,29 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
 
                       {/* Aksi */}
                       <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
-                        <button 
-                          onClick={() => setActiveTrxDetail(trx)}
-                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-all cursor-pointer border border-slate-200 shadow-sm"
-                        >
-                          Invoice
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {trx.status === 'pending' && trx.payment_type === 'qris_static' && (
+                            <button
+                              onClick={() => handleIndividualApprove(trx.id)}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setActiveTrxDetail(trx)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-all cursor-pointer border border-slate-200 shadow-sm"
+                          >
+                            Invoice
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center py-24 text-slate-400">
+                  <td colSpan={10} className="text-center py-24 text-slate-400">
                     <div className="flex flex-col items-center justify-center">
                       <Inbox className="h-14 w-14 text-slate-300 stroke-[1.2] mb-3" />
                       <p className="font-bold text-slate-650 font-heading">Tidak Ada Transaksi</p>
@@ -1052,7 +1119,16 @@ export function TransactionsTable({ initialTransactions }: TransactionsTableProp
           </div>
         </div>
       )}
-      
+
+      {/* Transfer Proof Modal */}
+      <TransferProofModal
+        transaction={viewingProof}
+        isOpen={!!viewingProof}
+        onClose={() => setViewingProof(null)}
+        onApprove={handleIndividualApprove}
+        onReject={handleIndividualReject}
+      />
+
     </div>
   );
 }
