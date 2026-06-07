@@ -18,7 +18,7 @@ const profileSchema = z.object({
   phone: z
     .string()
     .min(9, "Nomor telepon minimal 9 digit")
-    .max(15, "Nomor telepon maksimal 15 digit")
+    .max(16, "Nomor telepon maksimal 16 digit")
     .regex(/^[0-9+]+$/, "Nomor telepon hanya boleh berisi angka dan tanda +"),
 });
 

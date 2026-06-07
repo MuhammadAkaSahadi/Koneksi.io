@@ -64,29 +64,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Anda sudah memiliki akses ke tema ini" }, { status: 400 });
     }
 
-    // Generate unique 3-digit code
-    let uniqueCode: number;
-    let attempts = 0;
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // Fetch unique code from the theme
+    const { data: themeData, error: themeError } = await adminSupabase
+      .from("themes")
+      .select("unique_code")
+      .eq("id", themeId)
+      .single();
 
-    do {
-      uniqueCode = Math.floor(Math.random() * 900) + 100; // 100-999
-
-      const { data: existing } = await adminSupabase
-        .from("transactions")
-        .select("id")
-        .eq("unique_code", uniqueCode)
-        .gte("created_at", twentyFourHoursAgo)
-        .maybeSingle();
-
-      if (!existing) break;
-      attempts++;
-    } while (attempts < 10);
-
-    if (attempts >= 10) {
-      return NextResponse.json({ error: "Gagal generate kode unik. Silakan coba lagi." }, { status: 500 });
+    if (themeError || !themeData) {
+      return NextResponse.json({ error: "Tema tidak ditemukan" }, { status: 404 });
     }
 
+    const uniqueCode = themeData.unique_code ? Number(themeData.unique_code) : 0;
     const totalAmount = basePrice + uniqueCode;
 
     // Upload file to Supabase Storage

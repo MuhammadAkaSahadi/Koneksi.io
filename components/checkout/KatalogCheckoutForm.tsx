@@ -17,7 +17,7 @@ const checkoutSchema = z.object({
   fullName: z.string().min(3, "Nama lengkap minimal 3 karakter"),
   phone: z
     .string()
-    .min(16, "Nomor telepon minimal 9 digit")
+    .min(9, "Nomor telepon minimal 9 digit")
     .max(16, "Nomor telepon maksimal 15 digit")
     .regex(/^[0-9+]+$/, "Nomor telepon hanya boleh berisi angka dan tanda +"),
 });
@@ -31,6 +31,7 @@ interface KatalogCheckoutFormProps {
     slug: string;
     price_lifetime: number;
     thumbnail_url: string | null;
+    unique_code?: number | null;
   };
   user: {
     id: string;
@@ -45,7 +46,7 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'midtrans'>('qris');
   const [transferProof, setTransferProof] = useState<File | null>(null);
-  const [uniqueCodePreview] = useState(() => Math.floor(Math.random() * 900) + 100);
+  const uniqueCodePreview = theme.unique_code ?? 0;
   const router = useRouter();
 
   // Initialize react-hook-form

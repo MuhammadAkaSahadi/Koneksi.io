@@ -192,7 +192,7 @@ export function CoursePlayer({
   const canAccessActiveLesson = activeLesson ? (activeLesson.is_free || isEnrolled) : false;
 
   return (
-    <div className="flex flex-col lg:flex-row h-full min-h-[calc(100vh-64px)] w-full overflow-hidden bg-[#0c0d0f] text-slate-350">
+    <div className="flex flex-col lg:flex-row h-full min-h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-50 text-slate-600">
       
       {/* 1. Left Area: Video Pane & Content Info */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6">
@@ -200,13 +200,13 @@ export function CoursePlayer({
         {/* Top Header Actions */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Tabs Menu */}
-          <div className="flex items-center bg-[#16161a] p-1.5 rounded-xl border border-zinc-850">
+          <div className="flex items-center bg-slate-200/50 p-1.5 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveTab("video")}
               className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeTab === "video"
                   ? "bg-[#0891b2] text-white"
-                  : "text-slate-450 hover:text-white"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
               <Play className="h-3.5 w-3.5 fill-current" />
@@ -217,7 +217,7 @@ export function CoursePlayer({
               className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                 activeTab === "tulisan"
                   ? "bg-[#0891b2] text-white"
-                  : "text-slate-450 hover:text-white"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
               <BookText className="h-3.5 w-3.5" />
@@ -231,7 +231,7 @@ export function CoursePlayer({
               href="https://discord.gg/koneksiio"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#16161a] border border-zinc-850 text-slate-300 hover:text-white font-bold text-xs rounded-xl transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50/50 font-bold text-xs rounded-xl shadow-sm transition-all"
             >
               <MessageSquare className="h-3.5 w-3.5 text-[#5865F2] fill-current" />
               Join Discord
@@ -249,21 +249,21 @@ export function CoursePlayer({
         </div>
 
         {/* Player Container */}
-        <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-850 shadow-2xl">
+        <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-lg">
           {activeLesson ? (
             activeTab === "video" ? (
               canAccessActiveLesson ? (
                 <YoutubePlayer id={activeLesson.youtube_id} title={activeLesson.title} />
               ) : (
                 /* Locked Video Overlay */
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-zinc-950/95 text-center z-20">
-                  <div className="bg-amber-500/10 text-amber-400 p-4 rounded-full mb-4 border border-amber-500/20">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white/95 text-center z-20">
+                  <div className="bg-amber-50 text-amber-600 p-4 rounded-full mb-4 border border-amber-200">
                     <Lock className="h-10 w-10 stroke-[2]" />
                   </div>
-                  <h3 className="text-lg font-bold text-white font-heading mb-1.5">
+                  <h3 className="text-lg font-bold text-slate-900 font-heading mb-1.5">
                     Materi Ini Terkunci
                   </h3>
-                  <p className="text-slate-400 text-xs sm:text-sm max-w-sm mb-6 leading-relaxed">
+                  <p className="text-slate-500 text-xs sm:text-sm max-w-sm mb-6 leading-relaxed">
                     Dapatkan akses penuh ke modul pembelajaran ini untuk membuka seluruh video, kuis, dan forum diskusi.
                   </p>
                   <div className="flex gap-3">
@@ -277,15 +277,15 @@ export function CoursePlayer({
               )
             ) : (
               /* Materi Tulisan Pane */
-              <div className="absolute inset-0 overflow-y-auto p-6 md:p-8 bg-zinc-950/90 text-left">
-                <div className="max-w-3xl mx-auto prose prose-invert">
+              <div className="absolute inset-0 overflow-y-auto p-6 md:p-8 bg-white text-left">
+                <div className="max-w-3xl mx-auto prose">
                   <span className="text-[#0891b2] text-[10px] font-extrabold uppercase tracking-widest bg-[#0891b2]/10 px-2.5 py-0.5 rounded">
                     {activeChapter?.title}
                   </span>
-                  <h1 className="text-xl md:text-2xl font-bold text-white mt-3 mb-4 leading-tight border-b border-zinc-800 pb-3">
+                  <h1 className="text-xl md:text-2xl font-bold text-slate-900 mt-3 mb-4 leading-tight border-b border-slate-200 pb-3">
                     {activeLesson.title}
                   </h1>
-                  <div className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                  <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                     {activeLesson.description || "Tidak ada materi tulisan untuk bagian ini. Silakan tonton video penjelasannya."}
                   </div>
                 </div>
@@ -293,29 +293,29 @@ export function CoursePlayer({
             )
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-              <BookOpen className="h-12 w-12 text-zinc-700 mb-3" />
-              <p className="text-slate-450 text-xs font-semibold">Pilih materi di kurikulum untuk mulai belajar.</p>
+              <BookOpen className="h-12 w-12 text-slate-350 mb-3" />
+              <p className="text-slate-400 text-xs font-semibold">Pilih materi di kurikulum untuk mulai belajar.</p>
             </div>
           )}
         </div>
 
         {/* Video Info (Only shown if active tab is video) */}
         {activeLesson && activeTab === "video" && (
-          <div className="bg-[#16161a] border border-zinc-850 rounded-2xl p-6 text-left space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-left space-y-4 shadow-sm">
             <div className="flex flex-col gap-1">
               <span className="text-[#0891b2] text-xs font-bold uppercase tracking-wider">
                 {activeChapter?.title}
               </span>
-              <h2 className="text-lg md:text-2xl font-bold text-white font-heading leading-tight">
+              <h2 className="text-lg md:text-2xl font-bold text-slate-900 font-heading leading-tight">
                 {activeLesson.title}
               </h2>
             </div>
             
-            <div className="h-px bg-zinc-800/60 w-full" />
+            <div className="h-px bg-slate-150 w-full" />
 
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Deskripsi Materi</h4>
-              <p className="text-sm text-slate-350 leading-relaxed whitespace-pre-wrap">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Deskripsi Materi</h4>
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
                 {activeLesson.description || "Tidak ada deskripsi untuk materi ini."}
               </p>
             </div>
@@ -325,19 +325,19 @@ export function CoursePlayer({
       </div>
 
       {/* 2. Right Area: Curriculum Sidebar */}
-      <aside className="w-full lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-850 bg-[#0a0a0c] flex flex-col h-auto lg:h-full lg:max-h-screen">
+      <aside className="w-full lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex flex-col h-auto lg:h-full lg:max-h-screen">
         
         {/* Course Title Area */}
-        <div className="p-5 border-b border-zinc-850 text-left space-y-4">
+        <div className="p-5 border-b border-slate-200 text-left space-y-4">
           <Link 
             href="/katalog"
-            className="inline-flex items-center text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-wider transition-colors"
+            className="inline-flex items-center text-[10px] font-bold text-slate-400 hover:text-slate-800 uppercase tracking-wider transition-colors"
           >
             <ChevronRight className="h-3 w-3 mr-0.5 rotate-180" />
             Kembali ke Katalog
           </Link>
           
-          <h2 className="text-base sm:text-lg font-bold text-white leading-snug font-heading">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-snug font-heading">
             {theme.title}
           </h2>
 
@@ -351,7 +351,7 @@ export function CoursePlayer({
           )}
 
           {isEnrolled && (
-            <button className="flex items-center justify-center gap-1.5 w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 font-bold text-xs h-10 rounded-xl cursor-default">
+            <button className="flex items-center justify-center gap-1.5 w-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs h-10 rounded-xl cursor-default">
               <CheckCircle2 className="h-4 w-4" />
               Anda Memiliki Kelas Ini
             </button>
@@ -364,26 +364,26 @@ export function CoursePlayer({
             const isCollapsed = collapsedChapters[chapter.id];
             
             return (
-              <div key={chapter.id} className="border border-zinc-850 rounded-xl overflow-hidden bg-[#16161a]/30">
+              <div key={chapter.id} className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
                 {/* Chapter Header Toggle */}
                 <button
                   onClick={() => toggleChapter(chapter.id)}
-                  className="flex items-center justify-between w-full p-4 hover:bg-zinc-900/50 transition-colors text-left"
+                  className="flex items-center justify-between w-full p-4 hover:bg-slate-100/60 transition-colors text-left"
                 >
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Bab {chapterIndex + 1}
                     </span>
-                    <span className="font-bold text-sm text-white font-heading leading-tight">
+                    <span className="font-bold text-sm text-slate-800 font-heading leading-tight">
                       {chapter.title}
                     </span>
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform ${isCollapsed ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isCollapsed ? "rotate-180" : ""}`} />
                 </button>
 
                 {/* Lessons list inside chapter */}
                 {!isCollapsed && (
-                  <div className="border-t border-zinc-850/60 divide-y divide-zinc-850 bg-[#16161a]/60">
+                  <div className="border-t border-slate-200/60 divide-y divide-slate-100 bg-white">
                     {chapter.lessons.map((lesson) => {
                       const isActive = activeLesson?.id === lesson.id;
                       const isCompleted = completedLessonIds.has(lesson.id);
@@ -394,30 +394,30 @@ export function CoursePlayer({
                         <div
                           key={lesson.id}
                           onClick={() => handleLessonClick(lesson)}
-                          className={`flex items-start justify-between gap-3 p-3.5 hover:bg-zinc-900/50 transition-colors cursor-pointer text-left ${
-                            isActive ? "bg-zinc-900/80 border-l-2 border-[#0891b2]" : ""
+                          className={`flex items-start justify-between gap-3 p-3.5 hover:bg-slate-50/80 transition-colors cursor-pointer text-left ${
+                            isActive ? "bg-slate-50 border-l-2 border-[#0891b2]" : ""
                           }`}
                         >
                           <div className="flex items-start gap-2.5 min-w-0">
                             {/* Access/Play indicator icon */}
                             <div className="mt-0.5 shrink-0">
                               {canAccess ? (
-                                <Play className={`h-3.5 w-3.5 ${isActive ? "text-[#0891b2] fill-[#0891b2]" : "text-zinc-500"}`} />
+                                <Play className={`h-3.5 w-3.5 ${isActive ? "text-[#0891b2] fill-[#0891b2]" : "text-slate-400"}`} />
                               ) : (
-                                <Lock className="h-3.5 w-3.5 text-zinc-650" />
+                                <Lock className="h-3.5 w-3.5 text-slate-400" />
                               )}
                             </div>
 
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <span className={`text-xs font-semibold leading-relaxed ${
-                                isActive ? "text-[#0891b2] font-bold" : "text-slate-300"
+                                isActive ? "text-[#0891b2] font-bold" : "text-slate-700"
                               }`}>
                                 {lesson.title}
                               </span>
                               
                               <div className="flex items-center gap-2">
                                 {lesson.duration && (
-                                  <span className="text-[10px] font-mono text-zinc-550">
+                                  <span className="text-[10px] font-mono text-slate-400">
                                     {lesson.duration}
                                   </span>
                                 )}
@@ -439,13 +439,13 @@ export function CoursePlayer({
                                 className={`flex items-center justify-center h-4.5 w-4.5 rounded border transition-colors ${
                                   isCompleted
                                     ? "bg-emerald-500 border-emerald-500 text-white"
-                                    : "border-zinc-700 hover:border-[#0891b2] text-transparent"
+                                    : "border-slate-300 hover:border-[#0891b2] text-transparent"
                                 }`}
                               >
                                 <Check className="h-3.5 w-3.5 stroke-[3]" />
                               </button>
                             ) : (
-                              <Lock className="h-3.5 w-3.5 text-zinc-600" />
+                              <Lock className="h-3.5 w-3.5 text-slate-400" />
                             )}
                           </div>
 
