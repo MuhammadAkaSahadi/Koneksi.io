@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,15 +54,15 @@ export default async function Home() {
             <div className="lg:col-span-5 flex justify-center lg:justify-end">
               <div className="relative w-full max-w-[500px] aspect-square bg-primary/5 rounded-full flex items-center justify-center p-8 border border-primary/10">
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 rounded-full blur-3xl -z-10" />
-                <div className="grid grid-cols-2 gap-4 w-full h-full relative z-10">
-                  <div className="bg-white rounded-2xl shadow-xl flex items-center justify-center border p-6 flex-col gap-4 transform -translate-y-4">
-                    <Laptop className="h-12 w-12 text-primary" />
-                    <span className="font-semibold font-heading text-sm text-center">Software Engineering</span>
-                  </div>
-                  <div className="bg-white rounded-2xl shadow-xl flex items-center justify-center border p-6 flex-col gap-4 transform translate-y-8">
-                    <Cpu className="h-12 w-12 text-accent" />
-                    <span className="font-semibold font-heading text-sm text-center text-slate-800">Internet of Things</span>
-                  </div>
+                <div className="relative w-full h-full flex items-center justify-center z-10">
+                  <Image
+                    src="/esp.png"
+                    width={420}
+                    height={420}
+                    alt="ESP Pinout Diagram"
+                    className="object-contain max-w-[90%] max-h-[90%] drop-shadow-xl hover:scale-105 transition-transform duration-300"
+                    priority
+                  />
                 </div>
               </div>
             </div>
