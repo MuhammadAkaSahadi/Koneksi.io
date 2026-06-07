@@ -71,6 +71,14 @@ export default async function PlayerPage({
 
   const completedLessonIds = progressData?.map((p: any) => p.lesson_id) || [];
 
+  // Fetch certificate for the current user and theme
+  const { data: certificate } = await supabase
+    .from("certificates")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("theme_id", theme.id)
+    .maybeSingle();
+
   return (
     <div className="w-full h-full min-h-[calc(100vh-64px)]">
       <CoursePlayer
@@ -80,6 +88,7 @@ export default async function PlayerPage({
         initialCompletedLessonIds={completedLessonIds}
         userId={user.id}
         initialActiveLessonId={lessonId}
+        initialCertificateId={certificate?.id || null}
       />
     </div>
   );

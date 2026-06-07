@@ -215,15 +215,34 @@ export default async function KatalogPage({
                         <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider">
                           Akses Lifetime
                         </span>
-                        <span className="text-base font-extrabold text-slate-900 font-heading">
-                          {theme.price_lifetime > 0
-                            ? new Intl.NumberFormat("id-ID", {
+                        {theme.discount && Number(theme.discount) > 0 ? (
+                          <div className="flex flex-col">
+                            <span className="text-[10px] line-through text-slate-450 font-normal leading-none mb-0.5">
+                              {new Intl.NumberFormat("id-ID", {
                                 style: "currency",
                                 currency: "IDR",
                                 maximumFractionDigits: 0,
-                              }).format(theme.price_lifetime)
-                            : "Gratis"}
-                        </span>
+                              }).format(theme.price_lifetime)}
+                            </span>
+                            <span className="text-base font-extrabold text-emerald-600 font-heading leading-tight">
+                              {new Intl.NumberFormat("id-ID", {
+                                style: "currency",
+                                currency: "IDR",
+                                maximumFractionDigits: 0,
+                              }).format(theme.price_lifetime - theme.discount)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-base font-extrabold text-slate-900 font-heading">
+                            {theme.price_lifetime > 0
+                              ? new Intl.NumberFormat("id-ID", {
+                                  style: "currency",
+                                  currency: "IDR",
+                                  maximumFractionDigits: 0,
+                                }).format(theme.price_lifetime)
+                              : "Gratis"}
+                          </span>
+                        )}
                       </div>
 
                       <Link href={`/katalog/${theme.slug}`}>

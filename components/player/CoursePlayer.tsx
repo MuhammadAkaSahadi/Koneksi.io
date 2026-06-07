@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   ExternalLink,
   ChevronRight,
-  BookText
+  BookText,
+  Award
 } from "lucide-react";
 import { YoutubePlayer } from "./YoutubePlayer";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { claimCertificate } from "@/app/(dashboard)/dashboard/certificates/actions";
 
 interface Lesson {
   id: string;
@@ -48,6 +50,7 @@ interface Theme {
   title: string;
   slug: string;
   price_lifetime: number;
+  discount?: number | null;
 }
 
 interface CoursePlayerProps {
@@ -57,6 +60,7 @@ interface CoursePlayerProps {
   initialCompletedLessonIds: string[];
   userId: string | null;
   initialActiveLessonId?: string | null;
+  initialCertificateId?: string | null;
 }
 
 export function CoursePlayer({
@@ -65,10 +69,17 @@ export function CoursePlayer({
   isEnrolled,
   initialCompletedLessonIds,
   userId,
-  initialActiveLessonId
+  initialActiveLessonId,
+  initialCertificateId
 }: CoursePlayerProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+
+  const [certificateId, setCertificateId] = useState<string | null>(initialCertificateId || null);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(
+    new Set(initialCompletedLessonIds)
+  );
 
   // Find all lessons in order
   const allLessons = useMemo(() => {
@@ -91,12 +102,42 @@ export function CoursePlayer({
 
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(defaultLesson);
   const [activeTab, setActiveTab] = useState<"video" | "tulisan">("video");
-  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(
-    new Set(initialCompletedLessonIds)
-  );
   
   // Chapter collapse state map
   const [collapsedChapters, setCollapsedChapters] = useState<Record<string, boolean>>({});
+
+  const completedCount = useMemo(() => {
+    return allLessons.filter(l => completedLessonIds.has(l.id)).length;
+  }, [allLessons, completedLessonIds]);
+
+  const progressPercentage = useMemo(() => {
+    return allLessons.length > 0 ? Math.round((completedCount / allLessons.length) * 100) : 0;
+  }, [allLessons, completedCount]);
+
+  const isThemeCompleted = useMemo(() => {
+    return allLessons.length > 0 && allLessons.every(l => completedLessonIds.has(l.id));
+  }, [allLessons, completedLessonIds]);
+
+  const handleClaimCertificate = async () => {
+    if (!userId) {
+      toast.error("Anda harus masuk terlebih dahulu.");
+      return;
+    }
+    setIsClaiming(true);
+    try {
+      const res = await claimCertificate(theme.id);
+      if (res.error) {
+        toast.error(res.error);
+      } else if (res.success && res.certificateId) {
+        setCertificateId(res.certificateId);
+        toast.success("Selamat! Sertifikat Anda berhasil diterbitkan! 🎓🎉");
+      }
+    } catch (err: any) {
+      toast.error("Terjadi kesalahan saat mengklaim sertifikat.");
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   const toggleChapter = (chapterId: string) => {
     setCollapsedChapters((prev) => ({
@@ -163,6 +204,12 @@ export function CoursePlayer({
         setCompletedLessonIds(updated);
       } else {
         toast.success("Materi berhasil diselesaikan! 🎉");
+        const isNowCompleted = allLessons.length > 0 && allLessons.every(l => updated.has(l.id));
+        if (isNowCompleted) {
+          toast.success("Selamat! Anda telah menyelesaikan seluruh materi kelas ini! 🎓🎉", {
+            duration: 8000,
+          });
+        }
       }
     }
   };
@@ -345,16 +392,53 @@ export function CoursePlayer({
           {!isEnrolled && (
             <Link href={`/checkout/${theme.slug}`} className="block w-full">
               <Button className="w-full bg-[#0891b2] hover:bg-[#0891b2]/95 text-white font-extrabold text-xs h-10 rounded-xl shadow-lg shadow-[#0891b2]/10 font-heading border-0 cursor-pointer transition-transform active:scale-98">
-                Beli Akses Penuh — Rp {theme.price_lifetime.toLocaleString("id-ID")}
+                Beli Akses Penuh — Rp {(theme.price_lifetime - (theme.discount ?? 0)).toLocaleString("id-ID")}
               </Button>
             </Link>
           )}
 
           {isEnrolled && (
-            <button className="flex items-center justify-center gap-1.5 w-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs h-10 rounded-xl cursor-default">
-              <CheckCircle2 className="h-4 w-4" />
-              Anda Memiliki Kelas Ini
-            </button>
+            <div className="space-y-4 w-full text-left">
+              {/* Progress and Completion indicators */}
+              {isThemeCompleted ? (
+                certificateId ? (
+                  <Link href={`/certificates/${certificateId}`} target="_blank" className="block w-full">
+                    <Button className="w-full bg-[#0891b2] hover:bg-[#0891b2]/90 text-white font-extrabold text-xs h-10 rounded-xl shadow-lg shadow-[#0891b2]/10 font-heading border-0 cursor-pointer flex items-center justify-center gap-2">
+                      <Award className="h-4 w-4 animate-bounce" />
+                      Lihat Sertifikat Anda 🎓
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    onClick={handleClaimCertificate}
+                    disabled={isClaiming}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 rounded-xl shadow-lg shadow-emerald-600/10 font-heading border-0 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Award className="h-4 w-4 animate-pulse" />
+                    {isClaiming ? "Memproses..." : "Klaim Sertifikat Anda 🎓"}
+                  </Button>
+                )
+              ) : (
+                <button className="flex items-center justify-center gap-1.5 w-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs h-10 rounded-xl cursor-default">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Anda Memiliki Kelas Ini
+                </button>
+              )}
+
+              {/* Progress Bar Widget */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  <span>Progres Belajar</span>
+                  <span>{progressPercentage}% ({completedCount}/{allLessons.length})</span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-500 ease-out"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
 

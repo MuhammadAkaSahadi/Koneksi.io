@@ -19,7 +19,7 @@ export function CheckoutClient({ theme }: { theme: any }) {
         body: JSON.stringify({
           themeId: theme.id,
           themeTitle: theme.title,
-          price: theme.price_lifetime,
+          price: theme.price_lifetime - (theme.discount ?? 0),
         }),
       });
 

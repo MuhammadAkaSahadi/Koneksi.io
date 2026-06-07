@@ -168,11 +168,22 @@ export default async function Home() {
                     <div className="flex items-end justify-between">
                       <div>
                         <p className="text-xs text-slate-500 mb-1">Akses Lifetime</p>
-                        <p className="text-lg font-bold">
-                          {theme.price_lifetime > 0 
-                            ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.price_lifetime)
-                            : "Gratis"}
-                        </p>
+                        {theme.discount && Number(theme.discount) > 0 ? (
+                          <div className="flex flex-col text-left">
+                            <span className="text-xs line-through text-slate-400 font-normal leading-none mb-0.5">
+                              {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.price_lifetime)}
+                            </span>
+                            <span className="text-lg font-bold text-emerald-600 leading-tight">
+                              {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.price_lifetime - theme.discount)}
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="text-lg font-bold">
+                            {theme.price_lifetime > 0 
+                              ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.price_lifetime)
+                              : "Gratis"}
+                          </p>
+                        )}
                       </div>
                       <Link href={`/katalog/${theme.slug}`} className={cn(buttonVariants(), "w-auto px-6")}>
                         Detail

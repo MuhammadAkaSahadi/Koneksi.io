@@ -32,6 +32,7 @@ interface KatalogCheckoutFormProps {
     price_lifetime: number;
     thumbnail_url: string | null;
     unique_code?: number | null;
+    discount?: number | null;
   };
   user: {
     id: string;
@@ -47,6 +48,8 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'midtrans'>('qris');
   const [transferProof, setTransferProof] = useState<File | null>(null);
   const uniqueCodePreview = theme.unique_code ?? 0;
+  const discountAmount = theme.discount ?? 0;
+  const actualPrice = theme.price_lifetime - discountAmount;
   const router = useRouter();
 
   // Initialize react-hook-form
@@ -78,7 +81,7 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
         body: JSON.stringify({
           themeId: theme.id,
           themeTitle: theme.title,
-          price: theme.price_lifetime,
+          price: actualPrice,
           fullName: values.fullName,
           phone: values.phone,
         }),
@@ -149,7 +152,7 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
       const formData = new FormData();
       formData.append("themeId", theme.id);
       formData.append("themeTitle", theme.title);
-      formData.append("price", theme.price_lifetime.toString());
+      formData.append("price", actualPrice.toString());
       formData.append("fullName", values.fullName);
       formData.append("phone", values.phone);
       formData.append("transferProof", transferProof);
@@ -184,7 +187,7 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(theme.price_lifetime);
+  }).format(actualPrice);
 
   return (
     <>
@@ -399,6 +402,30 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
               <div className="h-px bg-slate-100" />
 
               <div className="space-y-2">
+                {discountAmount > 0 && (
+                  <>
+                    <div className="flex justify-between text-xs font-semibold text-slate-500">
+                      <span>Harga Normal</span>
+                      <span className="line-through">
+                        {new Intl.NumberFormat("id-ID", {
+                          style: "currency",
+                          currency: "IDR",
+                          maximumFractionDigits: 0,
+                        }).format(theme.price_lifetime)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs font-semibold text-emerald-600">
+                      <span>Potongan Diskon</span>
+                      <span className="font-bold">
+                        -{new Intl.NumberFormat("id-ID", {
+                          style: "currency",
+                          currency: "IDR",
+                          maximumFractionDigits: 0,
+                        }).format(discountAmount)}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between text-xs font-semibold text-slate-500">
                   <span>Harga Course</span>
                   <span className="text-slate-800 font-bold">{formattedPrice}</span>
@@ -421,7 +448,7 @@ export function KatalogCheckoutForm({ theme, user, profile }: KatalogCheckoutFor
                         style: "currency",
                         currency: "IDR",
                         minimumFractionDigits: 0,
-                      }).format(theme.price_lifetime + uniqueCodePreview)
+                      }).format(actualPrice + uniqueCodePreview)
                     : formattedPrice
                   }
                 </span>

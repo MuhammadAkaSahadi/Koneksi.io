@@ -29,6 +29,7 @@ interface Theme {
   status: string;
   created_at: string;
   unique_code?: number | null;
+  discount?: number | null;
 }
 
 interface CoursesTableProps {
@@ -64,6 +65,7 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
   const [formCategory, setFormCategory] = useState("Hardware (IoT)");
   const [formStatus, setFormStatus] = useState("Published");
   const [formPrice, setFormPrice] = useState("0");
+  const [formDiscount, setFormDiscount] = useState("0");
   const [formUniqueCode, setFormUniqueCode] = useState("0");
 
   // File upload states
@@ -109,6 +111,7 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
     setFormCategory("Hardware (IoT)");
     setFormStatus("Published");
     setFormPrice("0");
+    setFormDiscount("0");
     setFormUniqueCode((Math.floor(Math.random() * 900) + 100).toString());
     setSelectedFile(null);
     setUploadProgress(0);
@@ -126,6 +129,7 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
     setFormCategory(course.category || "Hardware (IoT)");
     setFormStatus(course.status || "Published");
     setFormPrice(course.price_lifetime.toString());
+    setFormDiscount((course.discount ?? 0).toString());
     setFormUniqueCode((course.unique_code ?? 0).toString());
     setSelectedFile(null);
     setUploadProgress(0);
@@ -195,6 +199,7 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
 
     const priceNum = Number(formPrice);
     const uniqueCodeNum = Number(formUniqueCode) || 0;
+    const discountNum = Number(formDiscount) || 0;
 
     const payload = {
       title: formTitle,
@@ -206,6 +211,7 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
       category: formCategory,
       status: formStatus,
       unique_code: uniqueCodeNum,
+      discount: discountNum,
     };
 
     if (editingCourse) {
@@ -381,7 +387,23 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
                     {/* Harga */}
                     <td className="py-4 px-6 font-extrabold text-slate-900 font-heading">
                       <div className="flex flex-col">
-                        <span>{formatCurrency(Number(course.price_lifetime))}</span>
+                        {course.discount !== undefined && course.discount !== null && course.discount > 0 ? (
+                          <>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="line-through text-xs text-slate-400 font-normal">
+                                {formatCurrency(Number(course.price_lifetime))}
+                              </span>
+                              <span className="text-emerald-600">
+                                {formatCurrency(Number(course.price_lifetime) - Number(course.discount))}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                              Diskon: -{formatCurrency(Number(course.discount))}
+                            </span>
+                          </>
+                        ) : (
+                          <span>{formatCurrency(Number(course.price_lifetime))}</span>
+                        )}
                         {course.unique_code !== undefined && course.unique_code !== null && course.unique_code > 0 && (
                           <span className="text-[11px] text-slate-400 font-normal font-mono mt-0.5">Kode Unik: +{course.unique_code}</span>
                         )}
@@ -600,8 +622,8 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
                 )}
               </div>
 
-              {/* Pricing & Unique Code */}
-              <div className="grid gap-4 sm:grid-cols-2">
+              {/* Pricing, Discount, & Unique Code */}
+              <div className="grid gap-4 sm:grid-cols-3">
                 {/* Pricing */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Harga Lifetime (Rp)</label>
@@ -614,6 +636,22 @@ export function CoursesTable({ initialCourses }: CoursesTableProps) {
                       placeholder="Contoh: 199000"
                       value={formPrice}
                       onChange={(e) => setFormPrice(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                {/* Diskon */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Diskon (Rp - Opsional)</label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">Rp</div>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Contoh: 50000"
+                      value={formDiscount}
+                      onChange={(e) => setFormDiscount(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 border border-slate-250 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1164b8] font-bold text-slate-800"
                     />
                   </div>

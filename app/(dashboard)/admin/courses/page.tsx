@@ -32,11 +32,12 @@ export default async function AdminCoursesPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  // Konversi data numerik harga dan kode unik
+  // Konversi data numerik harga, diskon, dan kode unik
   const parsedCourses = (themes || []).map((t: any) => ({
     ...t,
     price_lifetime: Number(t.price_lifetime),
-    unique_code: t.unique_code ? Number(t.unique_code) : 0
+    unique_code: t.unique_code ? Number(t.unique_code) : 0,
+    discount: t.discount ? Number(t.discount) : 0
   }));
 
   return (

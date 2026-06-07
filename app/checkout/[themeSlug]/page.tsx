@@ -146,13 +146,15 @@ export default async function CheckoutPage({
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Diskon</span>
-                  <span className="font-medium text-green-600">- Rp 0</span>
+                  <span className="font-medium text-emerald-600">
+                    - {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.discount ?? 0)}
+                  </span>
                 </div>
                 <div className="h-px bg-slate-200 my-2" />
                 <div className="flex justify-between">
                   <span className="font-bold text-slate-900">Total Tagihan</span>
                   <span className="font-bold text-primary">
-                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.price_lifetime)}
+                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(theme.price_lifetime - (theme.discount ?? 0))}
                   </span>
                 </div>
                 <div className="pt-4">

@@ -10,6 +10,7 @@ interface ThemeItem {
   slug: string;
   thumbnail_url: string | null;
   price_lifetime: number;
+  discount?: number | null;
 }
 
 interface ExploreModulesProps {
@@ -117,9 +118,24 @@ export function ExploreModules({ themes }: ExploreModulesProps) {
                   <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">
                     Investasi Belajar
                   </span>
-                  <span className="text-sm font-extrabold text-slate-900 font-heading">
-                    {formatCurrency(Number(theme.price_lifetime))}
-                  </span>
+                  {theme.discount && Number(theme.discount) > 0 ? (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] line-through text-slate-450 font-normal leading-none mb-0.5">
+                        {new Intl.NumberFormat("id-ID", {
+                          style: "currency",
+                          currency: "IDR",
+                          maximumFractionDigits: 0
+                        }).format(theme.price_lifetime)}
+                      </span>
+                      <span className="text-sm font-extrabold text-emerald-600 font-heading leading-tight">
+                        {formatCurrency(Number(theme.price_lifetime) - Number(theme.discount))}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-extrabold text-slate-900 font-heading">
+                      {formatCurrency(Number(theme.price_lifetime))}
+                    </span>
+                  )}
                 </div>
 
                 <Link href={`/katalog/${theme.slug}`}>

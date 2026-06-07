@@ -209,6 +209,7 @@ export default async function ThemeDetailPage({
             price_lifetime: Number(theme.price_lifetime),
             thumbnail_url: theme.thumbnail_url || null,
             unique_code: theme.unique_code ? Number(theme.unique_code) : 0,
+            discount: theme.discount ? Number(theme.discount) : 0,
           }}
           user={user ? { id: user.id, email: user.email || "" } : null}
           profile={profile}
