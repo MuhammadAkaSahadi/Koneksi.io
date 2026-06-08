@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, Target, Users, Zap, Globe, BookOpen, Award } from "lucide-react";
+import { ChevronRight, Target, Users, Zap, Globe, BookOpen, Award, Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { createAdminClient } from "@/utils/supabase/server";
 
 export const metadata = {
   title: "Tentang Kami | Koneksi.io",
@@ -35,13 +36,6 @@ const values = [
   },
 ];
 
-const stats = [
-  { label: "Pelajar Aktif", value: "5.000+" },
-  { label: "Modul Kursus", value: "20+" },
-  { label: "Mentor Berpengalaman", value: "10+" },
-  { label: "Kota di Indonesia", value: "34+" },
-];
-
 const team = [
   {
     name: "Ahmad Rizki",
@@ -60,7 +54,65 @@ const team = [
   },
 ];
 
-export default function TentangPage() {
+export default async function TentangPage() {
+  let totalUsers = 0;
+  let totalThemes = 0;
+  let totalCertificates = 0;
+  let totalEnrollments = 0;
+
+  try {
+    const adminSupabase = createAdminClient();
+    const [
+      { count: usersCount },
+      { count: themesCount },
+      { count: certificatesCount },
+      { count: enrollmentsCount }
+    ] = await Promise.all([
+      adminSupabase.from("profiles").select("*", { count: "exact", head: true }),
+      adminSupabase.from("themes").select("*", { count: "exact", head: true }),
+      adminSupabase.from("certificates").select("*", { count: "exact", head: true }),
+      adminSupabase.from("enrollments").select("*", { count: "exact", head: true })
+    ]);
+
+    totalUsers = usersCount || 0;
+    totalThemes = themesCount || 0;
+    totalCertificates = certificatesCount || 0;
+    totalEnrollments = enrollmentsCount || 0;
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+  }
+
+  const stats = [
+    {
+      label: "Pelajar Aktif",
+      value: totalUsers > 0 ? `${new Intl.NumberFormat("id-ID").format(totalUsers)}+` : "0",
+      icon: Users,
+      color: "from-blue-500/10 to-indigo-500/10",
+      iconColor: "text-blue-600",
+    },
+    {
+      label: "Modul Kursus",
+      value: totalThemes > 0 ? `${new Intl.NumberFormat("id-ID").format(totalThemes)}+` : "0",
+      icon: BookOpen,
+      color: "from-emerald-500/10 to-teal-500/10",
+      iconColor: "text-emerald-600",
+    },
+    {
+      label: "Sertifikasi",
+      value: totalCertificates > 0 ? `${new Intl.NumberFormat("id-ID").format(totalCertificates)}+` : "0",
+      icon: Award,
+      color: "from-amber-500/10 to-orange-500/10",
+      iconColor: "text-amber-600",
+    },
+    {
+      label: "Akses Lifetime",
+      value: totalEnrollments > 0 ? `${new Intl.NumberFormat("id-ID").format(totalEnrollments)}+` : "0",
+      icon: Sparkles,
+      color: "from-purple-500/10 to-pink-500/10",
+      iconColor: "text-purple-600",
+    },
+  ];
+
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 pb-24">
       {/* Header */}
@@ -96,14 +148,23 @@ export default function TentangPage() {
       {/* Stats Bar */}
       <section className="w-full -mt-16 relative z-10">
         <div className="container mx-auto px-4 md:px-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 text-center"
+                className="group bg-white rounded-2xl shadow-lg hover:shadow-xl border border-slate-100/80 p-6 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1.5"
               >
-                <p className="text-3xl font-bold font-heading text-primary mb-1">{stat.value}</p>
-                <p className="text-sm text-slate-500">{stat.label}</p>
+                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br transition-transform duration-300 group-hover:scale-110", stat.color)}>
+                  <stat.icon className={cn("w-6 h-6", stat.iconColor)} />
+                </div>
+                <div className="flex flex-col text-left">
+                  <p className="text-3xl font-extrabold font-heading text-slate-900 leading-none mb-1 group-hover:text-primary transition-colors">
+                    {stat.value}
+                  </p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    {stat.label}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -173,7 +234,7 @@ export default function TentangPage() {
       </section>
 
       {/* Team */}
-      <section className="w-full py-20">
+      {/* <section className="w-full py-20">
         <div className="container mx-auto px-4 md:px-12">
           <div className="text-center mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">Tim Kami</span>
@@ -197,7 +258,7 @@ export default function TentangPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA */}
       <section className="w-full">
