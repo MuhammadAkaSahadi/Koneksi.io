@@ -38,7 +38,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="font-semibold text-white mb-2">Terhubung</h4>
             <div className="flex items-center gap-4">
-              <a href="wa.me/62895368413511" className="hover:text-white transition-colors" aria-label="Twitter">
+              <a href="https://api.whatsapp.com/send/?phone=6289513297395&text&type=phone_number&app_absent=0" className="hover:text-white transition-colors" aria-label="Twitter">
                 <FaWhatsapp className="h-5 w-5" />
               </a>
               {/* <a href="#" className="hover:text-white transition-colors" aria-label="LinkedIn">
