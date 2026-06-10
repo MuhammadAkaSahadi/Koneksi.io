@@ -420,7 +420,7 @@ export function CurriculumManager({ theme, initialChapters }: CurriculumManagerP
           Struktur Kurikulum: {theme.title}
         </h2>
         <p className="text-xs text-slate-400 -mt-4">
-          Kelola urutan modul dan isi materi video pembelajaran. Pastikan setidaknya 2 materi pertama diatur gratis (`is_free = true`) untuk fitur freemium.
+          Kelola urutan modul dan isi materi video pembelajaran. Pastikan setidaknya 2 materi pertama diatur gratis untuk fitur freemium.
         </p>
 
         {/* Chapters container */}
