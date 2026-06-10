@@ -275,7 +275,7 @@ export function CoursePlayer({
           {/* Quick Actions */}
           <div className="flex items-center gap-2">
             <a
-              href="https://discord.gg/koneksiio"
+              href="https://discord.gg/AddSYYHxh"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50/50 font-bold text-xs rounded-xl shadow-sm transition-all"

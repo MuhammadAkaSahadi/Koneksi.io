@@ -76,7 +76,7 @@ export function Sidebar({
     { name: "Kritik & Saran", href: "/dashboard/feedback", icon: MessageCircle },
     // { name: "Transaksi", href: "/dashboard/transactions", icon: CreditCard },
     // { name: "Pengaturan", href: "/dashboard/settings", icon: Settings },
-    { name: "Komunitas", href: "https://discord.gg/koneksiio", icon: MessageSquare, isExternal: true, badge: "Discord" },
+    { name: "Komunitas", href: "https://discord.gg/AddSYYHxh", icon: MessageSquare, isExternal: true, badge: "Discord" },
   ];
 
   const links = isAdminRoute ? adminLinks : userLinks;
