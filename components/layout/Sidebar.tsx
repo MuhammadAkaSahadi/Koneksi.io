@@ -14,7 +14,8 @@ import {
   MessageSquare,
   HelpCircle,
   ChevronDown,
-  X
+  X,
+  MessageCircle
 } from "lucide-react";
 import { useTransition } from "react";
 import { signout } from "@/app/(auth)/login/actions";
@@ -64,6 +65,7 @@ export function Sidebar({
     { name: "Kelola Modul", href: "/admin/courses", icon: BookOpen },
     { name: "Manajemen Pengguna", href: "/admin/users", icon: Users },
     { name: "Data Transaksi", href: "/admin/transactions", icon: CreditCard },
+    { name: "Kritik & Saran", href: "/admin/feedback", icon: MessageCircle },
     // { name: "Pengaturan Web", href: "/admin/settings", icon: Settings },
   ];
 
@@ -71,6 +73,7 @@ export function Sidebar({
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Modul Saya", href: "/dashboard/courses", icon: BookOpen },
     { name: "Sertifikat", href: "/dashboard/certificates", icon: Award },
+    { name: "Kritik & Saran", href: "/dashboard/feedback", icon: MessageCircle },
     // { name: "Transaksi", href: "/dashboard/transactions", icon: CreditCard },
     // { name: "Pengaturan", href: "/dashboard/settings", icon: Settings },
     { name: "Komunitas", href: "https://discord.gg/koneksiio", icon: MessageSquare, isExternal: true, badge: "Discord" },
